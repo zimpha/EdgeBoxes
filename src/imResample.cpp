@@ -165,3 +165,9 @@ void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx, doub
     if (norm != 1.0f) output *= norm;
   }
 }
+
+cv::Mat imResample(cv::Mat& input, cv::Size dsize, double fx, double fy, const std::string& method, float norm) {
+  cv::Mat output;
+  imResample(input, output, dsize, fx, fy, method, norm);
+  return output;
+}

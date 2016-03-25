@@ -31,6 +31,7 @@
  * @param s      [1] integer downsampling amount after convolving
  */
 void convTri(cv::Mat& input, cv::Mat& output, float r, int s = 1);
+cv::Mat convTri(cv::Mat& input, float r, int s = 1);
 
 /**
  * 2D image convolution with a filter
@@ -43,5 +44,6 @@ void convTri(cv::Mat& input, cv::Mat& output, float r, int s = 1);
  * @param s      [1] integer downsampling amount after convolving
  */
 void convConst(const std::string &type, cv::Mat& input, cv::Mat& output, float r, int s = 1);
+cv::Mat convConst(const std::string &type, cv::Mat& input, float r, int s = 1);
 
 #endif

@@ -106,3 +106,9 @@ void imPad(cv::Mat& input, cv::Mat& output, std::vector<int> &pad, const std::st
     wrError("Unsupported image type.");
   }
 }
+
+cv::Mat imPad(cv::Mat& input, std::vector<int> &pad, const std::string &type, double val) {
+  cv::Mat output;
+  imPad(input, output, type, val);
+  return output;
+}

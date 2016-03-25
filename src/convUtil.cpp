@@ -263,3 +263,15 @@ void convConst(const std::string &type, cv::Mat& input, cv::Mat& output, float p
       wrError("Invalid type.");
     }
 }
+
+cv::Mat convTri(cv::Mat& input, float r, int s) {
+  cv::Mat output;
+  convTri(input, output, r, s);
+  return output;
+}
+
+cv::Mat convConst(const std::string &type, cv::Mat& input, float r, int s) {
+  cv::Mat output;
+  convConst(type, input, output, r, s);
+  return output;
+}

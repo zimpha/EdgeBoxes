@@ -43,6 +43,7 @@
  * @param useSingle  [true] determines output type (faster if useSingle)
  */
 void rgbConvert(cv::Mat& input, cv::Mat& output, const std::string colorSpace = "luv", bool useSingle = true);
+cv::Mat rgbConvert(cv::Mat& input, const std::string colorSpace = "luv", bool useSingle = true);
 
 /**
  * Resizes an image.
@@ -63,6 +64,7 @@ void rgbConvert(cv::Mat& input, cv::Mat& output, const std::string colorSpace = 
  * @param norm   normalize the output image, defualt is 1
  */
 void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx = 0, double fy = 0, const std::string& method = "bilinear", float norm = 1.0f);
+cv::Mat imResample(cv::Mat& input, cv::Size dsize, double fx = 0, double fy = 0, const std::string& method = "bilinear", float norm = 1.0f);
 
 /**
  * Pad an image along its four boundaries.
@@ -86,5 +88,6 @@ void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx = 0, 
  * @param val    pad value
  */
 void imPad(cv::Mat& input, cv::Mat& output, std::vector<int> &pad, const std::string &type = "", double val = 0);
+cv::Mat imPad(cv::Mat& input, std::vector<int> &pad, const std::string &type = "", double val = 0);
 
 #endif

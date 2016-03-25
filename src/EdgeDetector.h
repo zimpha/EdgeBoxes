@@ -47,13 +47,19 @@ struct DetectParam {
   std::string modelDir;   // ['models/'] target directory for storing models
   std::string modelFnm;   // ['model'] model filename
   std::string bsdsDir;    // ['BSR/BSDS500/data/'] location of BSDS dataset
+
   int nChns;      // [13] number of channels of the feature
+  uint32_t nChnFtrs;
+  int nSimFtrs;
+  int nTotFtrs;
 };
 
 class EdgeDetector {
 public:
   EdgeDetector();
   ~EdgeDetector();
+
+  void loadModel();
 
   /**
    * Compute features for structured edge detection.
@@ -74,6 +80,20 @@ public:
   * @param opts structured edge model options
   */
   void edgesDetect(cv::Mat &I, cv::Mat &E, cv::Mat &O, DetectParam &opts);
+
+private:
+  float* thrs;
+  uint32_t *fids, *child;
+  uint8_t *segs, *nSegs;
+  uint16_t *eBins;
+  uint32_t *eBnds;
+
+  int nTrees;
+  int nTreeNodes;
+
+  void clear();
+  uint32_t buildLookup(int *dims, int w);
+  void buildLookupSs(uint32_t *&cids1, uint32_t *&cids2, int *dims, int w, int m);
 };
 
 #endif

@@ -215,3 +215,9 @@ void rgbConvert(cv::Mat& input, cv::Mat& output, const std::string colorSpace, b
     wrError("Unsupported image type.");
   }
 }
+
+cv::Mat rgbConvert(cv::Mat& input, const std::string colorSpace, bool useSingle) {
+  cv::Mat output;
+  rgbConvert(input, output, colorSpace, useSingle);
+  return output;
+}
