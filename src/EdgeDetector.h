@@ -1,6 +1,7 @@
 #ifndef _EDGE_DETECTOR_H
 #define _EDGE_DETECTOR_H
 
+#include "CellArray.h"
 #include <string>
 #include <opencv2/opencv.hpp>
 
@@ -69,7 +70,7 @@ public:
    * @param chnsSim [h x w x nChannel] self-similarity output channels
    * @param opts    structured edge model options
    */
-  void featureExtract(cv::Mat &I, cv::Mat &chnsReg, cv::Mat &chnsSim, DetectParam &opts);
+  void featureExtract(CellArray &I, CellArray &chnsReg, CellArray &chnsSim, DetectParam &opts);
 
   /**
   * Detect edges in image.
@@ -79,7 +80,7 @@ public:
   * @param O    [h x w] coarse edge normal orientation (0=left, pi/2=up)
   * @param opts structured edge model options
   */
-  void edgesDetect(cv::Mat &I, cv::Mat &E, cv::Mat &O, DetectParam &opts);
+  void edgesDetect(CellArray &I, CellArray &E, CellArray &O, DetectParam &opts);
 
 private:
   float* thrs;

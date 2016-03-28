@@ -1,8 +1,7 @@
 #include "imageUtil.h"
 #include "wrappers.h"
+#include "global.h"
 #include <cstring>
-
-typedef unsigned char uchar;
 
 // pad A by [pt,pb,pl,pr] and store result in B
 template<class T> void imPad( T *A, T *B, int h, int w, int d, int pt, int pb,
@@ -63,12 +62,11 @@ template<class T> void imPad( T *A, T *B, int h, int w, int d, int pt, int pb,
   #undef PAD
 }
 
-void imPad(cv::Mat& input, cv::Mat& output, std::vector<int> &pad, const std::string &type, double val) {
-  int ns[3] = {input.rows, input.cols, input.channels()}, ms[3];
+void imPad(CellArray& input, CellArray& output, std::vector<int> &pad, const std::string &type, double val) {
+  int ns[3] = {input.rows, input.cols, input.channels}, ms[3];
 
   // Error checking on arguments
-  int inputDepth = input.depth();
-  if (inputDepth != CV_32F && inputDepth != CV_64F && inputDepth != CV_8U) {
+  if (input.type != SINGLE_CLASS && input.type != DOUBLE_CLASS && input.type != UINT8_CLASS) {
     wrError("input image should be 2D or 3D single, double or uint8 array.");
   }
 
@@ -92,23 +90,23 @@ void imPad(cv::Mat& input, cv::Mat& output, std::vector<int> &pad, const std::st
   ms[0] = ns[0] + pt + pb; ms[1] = ns[1] + pl + pr; ms[2] = ns[2];
   if (ms[0] < 0 || ns[0] <= -pt || ns[0] <= -pb ) ms[0] = 0;
   if (ms[1] < 0 || ns[1] <= -pl || ns[1] <= -pr ) ms[1] = 0;
-  wrCreateCVMat(ms[0], ms[1], input.type(), output);
+  output.create(ms[0], ms[1], ms[2], input.type);
 
   // pad array
   void *A = input.data, *B = output.data;
-  if (inputDepth == CV_64F) {
+  if (input.type == DOUBLE_CLASS) {
     imPad((double*)A, (double*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, val);
-  } else if (inputDepth == CV_32F) {
+  } else if (input.type == SINGLE_CLASS) {
     imPad((float*)A, (float*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, float(val));
-  } else if (inputDepth == CV_8U) {
-    imPad((uchar*)A, (uchar*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, uchar(val));
+  } else if (input.type == UINT8_CLASS) {
+    imPad((uchar*)A, (uchar*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, uint8_t(val));
   } else {
     wrError("Unsupported image type.");
   }
 }
 
-cv::Mat imPad(cv::Mat& input, std::vector<int> &pad, const std::string &type, double val) {
-  cv::Mat output;
-  imPad(input, output, type, val);
+CellArray imPad(CellArray& input, std::vector<int> &pad, const std::string &type, double val) {
+  CellArray output;
+  imPad(input, output, pad, type, val);
   return output;
 }

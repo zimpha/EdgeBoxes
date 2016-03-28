@@ -1,6 +1,7 @@
 #ifndef _IMAGE_UTIL_H
 #define _IMAGE_UTIL_H
 
+#include "CellArray.h"
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
@@ -42,8 +43,8 @@
  * @param colorSpace ['luv'] other choices include: 'gray', 'hsv', 'rgb', 'orig'
  * @param useSingle  [true] determines output type (faster if useSingle)
  */
-void rgbConvert(cv::Mat& input, cv::Mat& output, const std::string colorSpace = "luv", bool useSingle = true);
-cv::Mat rgbConvert(cv::Mat& input, const std::string colorSpace = "luv", bool useSingle = true);
+void rgbConvert(CellArray& input, CellArray& output, const std::string colorSpace = "luv", bool useSingle = true);
+CellArray rgbConvert(CellArray& input, const std::string colorSpace = "luv", bool useSingle = true);
 
 /**
  * Resizes an image.
@@ -63,8 +64,8 @@ cv::Mat rgbConvert(cv::Mat& input, const std::string colorSpace = "luv", bool us
  *               	+ bilinear - a bilinear interpolation (used by default)
  * @param norm   normalize the output image, defualt is 1
  */
-void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx = 0, double fy = 0, const std::string& method = "bilinear", float norm = 1.0f);
-cv::Mat imResample(cv::Mat& input, cv::Size dsize, double fx = 0, double fy = 0, const std::string& method = "bilinear", float norm = 1.0f);
+void imResample(CellArray& input, CellArray& output, cv::Size dsize, double fx = 0, double fy = 0, const std::string& method = "bilinear", float norm = 1.0f);
+CellArray imResample(CellArray& input, cv::Size dsize, double fx = 0, double fy = 0, const std::string& method = "bilinear", float norm = 1.0f);
 
 /**
  * Pad an image along its four boundaries.
@@ -87,7 +88,7 @@ cv::Mat imResample(cv::Mat& input, cv::Size dsize, double fx = 0, double fy = 0,
  * @param type   pad type, include: 'replicate', 'symmetric', 'circular'
  * @param val    pad value
  */
-void imPad(cv::Mat& input, cv::Mat& output, std::vector<int> &pad, const std::string &type = "", double val = 0);
-cv::Mat imPad(cv::Mat& input, std::vector<int> &pad, const std::string &type = "", double val = 0);
+void imPad(CellArray& input, CellArray& output, std::vector<int> &pad, const std::string &type = "", double val = 0);
+CellArray imPad(CellArray& input, std::vector<int> &pad, const std::string &type = "", double val = 0);
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef _GRADIENT_UTIL_H
 #define _GRADIENT_UTIL_H
 
-#include <opencv2/opencv.hpp>
+#include "CellArray.h"
 
 /**
  * Compute numerical gradients along x and y directions.
@@ -10,7 +10,7 @@
  * @param Gx    [hxwxk] x-gradient (horizontal)
  * @param Gy    [hxwxk] y-gradient (vertical)
  */
-void gradient(cv::Mat& I, cv::Mat& Gx, cv::Mat& Gy);
+void gradient(CellArray& I, CellArray& Gx, CellArray& Gy);
 
 /**
  * Compute gradient magnitude and orientation at each image location.
@@ -32,7 +32,7 @@ void gradient(cv::Mat& I, cv::Mat& Gx, cv::Mat& Gy);
  * @param normConst [.005] normalization constant
  * @param full      [0] if true compute angles in [0,2*pi) else in [0,pi)
  */
-void gradientMag(cv::Mat& I, cv::Mat& M, cv::Mat& O, int channel = 0, float normRad = 0.f, float normConst = .005f, bool full = false);
+void gradientMag(CellArray& I, CellArray& M, CellArray& O, int channel = 0, float normRad = 0.f, float normConst = .005f, bool full = false);
 
 /**
  * Compute oriented gradient histograms.
@@ -52,6 +52,6 @@ void gradientMag(cv::Mat& I, cv::Mat& M, cv::Mat& O, int channel = 0, float norm
  * @param clipHog  [.2] value at which to clip hog histogram bins
  * @param full     [false] if true expects angles in [0,2*pi) else in [0,pi)
  */
-void gradientHist(cv::Mat& M, cv::Mat &O, cv::Mat& H, int binSize = 8, int nOrients = 9, int softBin = 1, int useHog = 0, float clipHog = 0.2f, bool full = false);
+void gradientHist(CellArray& M, CellArray &O, CellArray& H, int binSize = 8, int nOrients = 9, int softBin = 1, int useHog = 0, float clipHog = 0.2f, bool full = false);
 
 #endif

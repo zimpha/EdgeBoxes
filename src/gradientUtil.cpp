@@ -2,6 +2,7 @@
 #include "convUtil.h"
 #include "wrappers.h"
 #include "sse.h"
+#include "global.h"
 #include <cmath>
 #include <cstring>
 
@@ -312,11 +313,11 @@ void fhog( float *M, float *O, float *H, int h, int w, int binSize,
   wrFree(N); wrFree(R1); wrFree(R2);
 }
 
-void gradient(cv::Mat& I, cv::Mat& Gx, cv::Mat& Gy) {
-  int h = I.rows, w = I.cols, d = I.channels();
+void gradient(CellArray& I, CellArray& Gx, CellArray& Gy) {
+  int h = I.rows, w = I.cols, d = I.channels;
 
   // check input arguments
-  if (I.depth() != CV_32F) {
+  if (I.type != SINGLE_CLASS) {
     wrError("I has incorrect type.");
   }
   if (h < 2 || w < 2) {
@@ -324,17 +325,17 @@ void gradient(cv::Mat& I, cv::Mat& Gx, cv::Mat& Gy) {
   }
 
   // create output matrix
-  wrCreateCVMat(h, w, I.type(), Gx);
-  wrCreateCVMat(h, w, I.type(), Gy);
+  Gx.create(h, w, d, SINGLE_CLASS);
+  Gy.create(h, w, d, SINGLE_CLASS);
 
   grad2((float*)I.data, (float*)Gx.data, (float*)Gy.data, h, w, d);
 }
 
-void gradientMag(cv::Mat& I, cv::Mat& M, cv::Mat& O, int channel, float normRad, float normConst, bool full) {
-  int h = I.rows, w = I.cols, d = I.channels();
+void gradientMag(CellArray& I, CellArray& M, CellArray& O, int channel, float normRad, float normConst, bool full) {
+  int h = I.rows, w = I.cols, d = I.channels;
 
   // check input arguments
-  if (I.depth() != CV_32F) {
+  if (I.type != SINGLE_CLASS) {
     wrError("I has incorrect type.");
   }
   if (h < 2 || w < 2) {
@@ -342,8 +343,8 @@ void gradientMag(cv::Mat& I, cv::Mat& M, cv::Mat& O, int channel, float normRad,
   }
 
   // create output matrix
-  wrCreateCVMat(h, w, CV_32F, M);
-  wrCreateCVMat(h, w, CV_32F, O);
+  M.create(h, w, 1, SINGLE_CLASS);
+  O.create(h, w, 1, SINGLE_CLASS);
 
   float* input = (float*)I.data;
   if (channel > 0 && channel <= d) {
@@ -354,26 +355,26 @@ void gradientMag(cv::Mat& I, cv::Mat& M, cv::Mat& O, int channel, float normRad,
 
   if (normRad == 0) return;
   // normalization
-  cv::Mat S;
+  CellArray S;
   convTri(M, S, normRad);
   gradMagNorm((float*)M.data, (float*)S.data, h, w, normConst);
 }
 
-void gradientHist(cv::Mat& M, cv::Mat &O, cv::Mat& H, int binSize, int nOrients, int softBin, int useHog, float clipHog, bool full) {
-  int h = M.rows, w = M.cols, d = M.channels();
+void gradientHist(CellArray& M, CellArray &O, CellArray& H, int binSize, int nOrients, int softBin, int useHog, float clipHog, bool full) {
+  int h = M.rows, w = M.cols, d = M.channels;
 
   // check input arguments
-  if (M.depth() != CV_32F || O.depth() != CV_32F) {
+  if (M.type != SINGLE_CLASS || O.type != SINGLE_CLASS) {
     wrError("M or O has incorrect type.");
   }
-  if (O.rows != h || O.cols != w || O.channels() != 1 || d != 1) {
+  if (O.rows != h || O.cols != w || O.channels != 1 || d != 1) {
     wrError("M or O has incorrect size.");
   }
 
   // create output matrix
   int hb = h / binSize, wb = w / binSize;
   int nChns = useHog == 0 ? nOrients : (useHog == 1 ? nOrients * 4 : nOrients * 3 + 5);
-  wrCreateCVMat(hb, wb, CV_32FC(nChns), H);
+  H.create(hb, wb, nChns, SINGLE_CLASS);
 
   if (nOrients == 0) return;
   if (useHog == 0) {

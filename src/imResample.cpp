@@ -1,6 +1,7 @@
 #include "imageUtil.h"
 #include "wrappers.h"
 #include "sse.h"
+#include "global.h"
 #include <cstring>
 #include <cmath>
 #include <typeinfo>
@@ -126,7 +127,7 @@ void resample( T *A, T *B, int ha, int hb, int wa, int wb, int d, T r ) {
   alFree(yas); alFree(ybs); alFree(ywts);
 }
 
-void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx, double fy, const std::string& method, float norm) {
+void imResample(CellArray& input, CellArray& output, cv::Size dsize, double fx, double fy, const std::string& method, float norm) {
   bool useBilinear = method == "bilinear";
   if (dsize.width == 0 || dsize.height == 0) {
     if (fx == 0 || fy == 0) {
@@ -136,8 +137,8 @@ void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx, doub
   }
 
   if (useBilinear) {
-    wrCreateCVMat(dsize, input.type(), output);
-    int nChannels = input.channels();
+    output.create(dsize.height, dsize.width, input.channels, input.type);
+    int nChannels = input.channels;
     int ns[2] = {input.rows, input.cols};
     int ms[2] = {output.rows, output.cols};
     if (ms[0] <= 0 || ms[1] <= 0) {
@@ -145,11 +146,11 @@ void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx, doub
     }
     void *A = input.data;
     void *B = output.data;
-    if (input.depth() == CV_64F) {
+    if (input.type == DOUBLE_CLASS) {
       resample((double*)A, (double*)B, ns[0], ns[1], ms[0], ms[1], nChannels, (double)norm);
-    } else if (input.depth() == CV_32F) {
+    } else if (input.type == SINGLE_CLASS) {
       resample((float*)A, (float*)B, ns[0], ns[1], ms[0], ms[1], nChannels, (float)norm);
-    } else if (input.depth() == CV_8U) {
+    } else if (input.type == UINT8_CLASS) {
       int n = ns[0] * ns[1] * nChannels;
       int m = ms[0] * ms[1] * nChannels;
       float *A1 = (float*)wrMalloc(n * sizeof(float));
@@ -161,13 +162,15 @@ void imResample(cv::Mat& input, cv::Mat& output, cv::Size dsize, double fx, doub
       wrError("Unsupported image type.");
     }
   } else {
-    cv::resize(input, output, dsize, 0, 0, cv::INTER_NEAREST);
-    if (norm != 1.0f) output *= norm;
+    cv::Mat A = input.toCvMat(), B;
+    cv::resize(A, B, dsize, 0, 0, cv::INTER_NEAREST);
+    if (norm != 1.0f) B *= norm;
+    output.fromCvMat(B);
   }
 }
 
-cv::Mat imResample(cv::Mat& input, cv::Size dsize, double fx, double fy, const std::string& method, float norm) {
-  cv::Mat output;
+CellArray imResample(CellArray& input, cv::Size dsize, double fx, double fy, const std::string& method, float norm) {
+  CellArray output;
   imResample(input, output, dsize, fx, fy, method, norm);
   return output;
 }

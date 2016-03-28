@@ -164,7 +164,7 @@ void _rgbConvert(iT* I, oT* O, int n, int d, int flag, oT nrm) {
   else wrError("Unknown flag.");
 }
 
-void rgbConvert(cv::Mat& input, cv::Mat& output, const std::string colorSpace, bool useSingle) {
+void rgbConvert(CellArray& input, CellArray& output, const std::string colorSpace, bool useSingle) {
   // TODO: check input matrix
 
   // get flag
@@ -176,48 +176,46 @@ void rgbConvert(cv::Mat& input, cv::Mat& output, const std::string colorSpace, b
   else if (colorSpace == "orig") flag = 4;
   else wrError("unknown color space: " + colorSpace);
 
-  int inputDepth = input.depth();
-  int inputChannel = input.channels();
-  int outputDepth = useSingle ? CV_32F : CV_64F;
+  int inputChannel = input.channels;
+  int outputType = useSingle ? SINGLE_CLASS : DOUBLE_CLASS;
   int n = input.rows * input.cols;
 
   // deal some special convert
   if (flag == 4) flag = 1;
   bool norm = (inputChannel == 1 && flag == 0) || flag == 1;
-  if (norm && inputDepth == outputDepth) {
+  if (norm && input.type == outputType) {
     output = input;
     return;
   }
 
   // alloc output data
   int outputChannel = (flag == 0) ? (inputChannel == 1 ? 1 : inputChannel / 3) : inputChannel;
-  int outputType = useSingle ? CV_32FC(outputChannel) : CV_64FC(outputChannel);
-  wrCreateCVMat(input.size(), outputType, output);
+  output.create(input.rows, input.cols, outputChannel, outputType);
 
   void* I = input.data;
   void* O = output.data;
   if (!((inputChannel == 1 && flag == 0) || flag == 1 || inputChannel % 3 == 0)) {
     wrError("Input image must have third dimension d==1 or (d/3)*3==d.");
   }
-  if (inputDepth == CV_32F && !useSingle) {
+  if (input.type == SINGLE_CLASS && !useSingle) {
     _rgbConvert((float*)I, (double*)O, n, inputChannel, flag, 1.0);
-  } else if (inputDepth == CV_32F && useSingle) {
+  } else if (input.type == SINGLE_CLASS && useSingle) {
     _rgbConvert((float*)I, (float*)O, n, inputChannel, flag, 1.0f);
-  } else if (inputDepth == CV_64F && !useSingle) {
+  } else if (input.type == DOUBLE_CLASS && !useSingle) {
     _rgbConvert((double*)I, (double*)O, n, inputChannel, flag, 1.0);
-  } else if (inputDepth == CV_64F && useSingle) {
+  } else if (input.type == DOUBLE_CLASS && useSingle) {
     _rgbConvert((double*)I, (float*)O, n, inputChannel, flag, 1.0f);
-  } else if (inputDepth == CV_8U && !useSingle) {
+  } else if (input.type == UINT8_CLASS && !useSingle) {
     _rgbConvert((unsigned char*)I, (double*)O, n, inputChannel, flag, 1.0 / 255);
-  } else if (inputDepth == CV_8U && useSingle) {
+  } else if (input.type == UINT8_CLASS && useSingle) {
     _rgbConvert((unsigned char*)I, (float*)O, n, inputChannel, flag, 1.0f / 255);
   } else {
     wrError("Unsupported image type.");
   }
 }
 
-cv::Mat rgbConvert(cv::Mat& input, const std::string colorSpace, bool useSingle) {
-  cv::Mat output;
+CellArray rgbConvert(CellArray& input, const std::string colorSpace, bool useSingle) {
+  CellArray output;
   rgbConvert(input, output, colorSpace, useSingle);
   return output;
 }

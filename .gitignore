@@ -1,3 +1,10 @@
 *.o
 *.out
 image/
+Makefile
+
+# cmake file
+*.cmake
+CMakeFiles
+src/CMakeFiles
+CMakeCache.txt

@@ -1,7 +1,7 @@
 #ifndef _CONV_UTIL_H
 #define _CONV_UTIL_H
 
-#include <opencv2/opencv.hpp>
+#include "CellArray.h"
 #include <string>
 
 /**
@@ -30,8 +30,8 @@
  *               filter standard deviation is: sigma=sqrt(r*(r+2)/6)
  * @param s      [1] integer downsampling amount after convolving
  */
-void convTri(cv::Mat& input, cv::Mat& output, float r, int s = 1);
-cv::Mat convTri(cv::Mat& input, float r, int s = 1);
+void convTri(CellArray& input, CellArray& output, float r, int s = 1);
+CellArray convTri(CellArray& input, float r, int s = 1);
 
 /**
  * 2D image convolution with a filter
@@ -43,7 +43,7 @@ cv::Mat convTri(cv::Mat& input, float r, int s = 1);
  *               filter standard deviation is: sigma=sqrt(r*(r+2)/6)
  * @param s      [1] integer downsampling amount after convolving
  */
-void convConst(const std::string &type, cv::Mat& input, cv::Mat& output, float r, int s = 1);
-cv::Mat convConst(const std::string &type, cv::Mat& input, float r, int s = 1);
+void convConst(const std::string &type, CellArray& input, CellArray& output, float r, int s = 1);
+CellArray convConst(const std::string &type, CellArray& input, float r, int s = 1);
 
 #endif

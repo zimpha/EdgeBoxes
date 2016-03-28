@@ -1,7 +1,21 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(EDGE_LIB_SRC convUtil.cpp EdgeDetector.cpp imPad.cpp rgbConvert.cpp EdgeBoxes.cpp gradientUtil.cpp imResample.cpp wrappers.cpp)
+set(GRAD_LIB_SRC wrappers.cpp gradientUtil.cpp CellArray.cpp CellArray.h)
+add_library(grad STATIC ${GRAD_LIB_SRC})
+target_link_libraries(grad ${OpenCV_LIBS})
+set_target_properties(grad PROPERTIES VERSION 1.0.0 SOVERSION 1)
 
+set(IMAGE_LIB_SRC imPad.cpp rgbConvert.cpp imResample.cpp wrappers.cpp CellArray.cpp CellArray.h)
+add_library(image STATIC ${IMAGE_LIB_SRC})
+target_link_libraries(image ${OpenCV_LIBS})
+set_target_properties(image PROPERTIES VERSION 1.0.0 SOVERSION 1)
+
+set(CONV_LIB_SRC wrappers.cpp convUtil.cpp CellArray.cpp CellArray.h)
+add_library(conv STATIC ${CONV_LIB_SRC})
+target_link_libraries(conv ${OpenCV_LIBS})
+set_target_properties(conv PROPERTIES VERSION 1.0.0 SOVERSION 1)
+
+set(EDGE_LIB_SRC ${GRAD_LIB_SRC} ${IMAGE_LIB_SRC} ${CONV_LIB_SRC} EdgeDetector.cpp  EdgeBoxes.cpp)
 add_library(edge STATIC ${EDGE_LIB_SRC})
 target_link_libraries(edge ${OpenCV_LIBS})
 set_target_properties(edge PROPERTIES VERSION 1.0.0 SOVERSION 1)

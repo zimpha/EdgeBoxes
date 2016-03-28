@@ -1,3 +1,4 @@
+#include "global.h"
 #include "EdgeDetector.h"
 #include "convUtil.h"
 #include "gradientUtil.h"
@@ -17,30 +18,30 @@ EdgeDetector::~EdgeDetector() {
   clear();
 }
 
-void EdgeDetector::featureExtract(cv::Mat &I, cv::Mat &chnsReg, cv::Mat &chnsSim, DetectParam &opts) {
+void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &chnsSim, DetectParam &opts) {
   if (I.channels() != 3) {
     wrError("input image must have 3 channels");
   }
   int shrink = opts.shrink;
-  cv::Mat luv, Ishrink;
+  CellArray luv, Ishrink;
   rgbConvert(I, luv);
   imResample(luv, Ishrink, cv::Size(0, 0), 1.0 / shrink, 1.0 / shrink);
-  cv::Mat chns[opts.nChns];
+  CellArray chns[opts.nChns];
   int k = 0;
   chns[k++] = Ishrink;
   for (int i = 1, s = 1; i <= 2; ++i, s <<= 1) {
-    cv::Mat I1, I2;
+    CellArray I1, I2;
     if (s == shrink) I1 = Ishrink;
     else imResample(luv, I1, cv::Size(0, 0), 1.0 / s, 1.0 / s);
     convTri(I1, I2, opts.grdSmooth);
-    cv::Mat M, O, H;
+    CellArray M, O, H;
     gradientMag(I2, M, O, 0, opts.normRad, .01);
     gradientHist(M, O, H, std::max(1, shrink / s), opts.nOrients, 0);
     imResample(M, chns[k++], cv::Size(0, 0), (double)s / shrink, (double)s / shrink);
     imResample(H, chns[k++], cv::Size(0, 0), std::max(1.0, (double)s / shrink), std::max(1.0, (double)s / shrink));
   }
-  cv::Mat tmp;
-  cv::merge(chns, opts.nChns, tmp);
+  CellArray tmp;
+  mergeCellArray(chns, opts.nChns, tmp);
   assert(tmp.channels() == opts.nChns);
   float chnSm = opts.chnSmooth / shrink;
   float simSm = opts.simSmooth / shrink;
@@ -48,7 +49,7 @@ void EdgeDetector::featureExtract(cv::Mat &I, cv::Mat &chnsReg, cv::Mat &chnsSim
   convTri(tmp, chnsSim, simSm);
 }
 
-void EdgeDetector::edgesDetect(cv::Mat &I, cv::Mat &E, cv::Mat &O, DetectParam &opts) {
+void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O, DetectParam &opts) {
   // get parameters
   opts.stride = std::max(opts.stride, opts.shrink);
   opts.nTreesEval = std::min(opts.nTreesEval, opts.nTrees);
@@ -61,7 +62,7 @@ void EdgeDetector::edgesDetect(cv::Mat &I, cv::Mat &E, cv::Mat &O, DetectParam &
   I = imPad(I, p, "symmetric");
 
   // get feature
-  cv::Mat chnsReg, chnsSim;
+  CellArray chnsReg, chnsSim;
   featureExtract(I, chnsReg, chnsSim, opts);
   if (opts.sharpen) {
     I = convTri(rgbConvert(I, "rgb"), 1);
@@ -108,22 +109,22 @@ void EdgeDetector::edgesDetect(cv::Mat &I, cv::Mat &E, cv::Mat &O, DetectParam &
   if (opts.sharpen == 0) t *= 2;
   else if (opts.sharpen == 1) t *= 1.8;
   else t *= 1.66;
-  E *= t;
+  E.multiply(t);
   E = convTri(E, 1);
 
   // compute approximate orientation O from edges E
   E = convTri(E, 4);
-  cv::Mat Ox, Oy, Oxx, Oxy, Oyy;
+  CellArray Ox, Oy, Oxx, Oxy, Oyy;
   gradient(E, Ox, Oy);
   gradient(Ox, Oxx, Oxy);
   gradient(Oy, Oxy, Oyy);
-  wrCreateCVMat(E.size(), E.type(), O);
-  for (int y = 0; y < O.rows; ++y) {
-    for (int x = 0; x < O.cols; ++x) {
-      float val = Oyy.at<float>(y, x) * sgn(-Oxy.at<float>(y, x)) / (Oxx.at<float>(y, x) + 1e-5);
+  O.create(E.rows, E.cols, E.channels, E.type);
+  for (int i = 0; i < O.rows; ++i) {
+    for (int j = 0; j < O.cols; ++j) {
+      float val = Oyy.at<float>(i, j) * sgn(-Oxy.at<float>(i, j)) / (Oxx.at<float>(i, j) + 1e-5);
       val = fmod(atan(val), PI);
       if (val < -1e-8) val += PI;
-      O.at<float>(y, x) = val;
+      O.at<float>(i, j) = val;
     }
   }
   // perform nms

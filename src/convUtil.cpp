@@ -1,6 +1,7 @@
 #include "convUtil.h"
 #include "sse.h"
 #include "wrappers.h"
+#include "global.h"
 
 // convolve one column of I by a 2rx1 ones filter
 void _convBoxY(float* I, float* O, int h, int r, int s) {
@@ -189,7 +190,7 @@ void _convMax(float *I, float *O, int h, int w, int d, int r) {
   alFree(T);
 }
 
-void convTri(cv::Mat& input, cv::Mat& output, float r, int s) {
+void convTri(CellArray& input, CellArray& output, float r, int s) {
   if (r == 0 && s == 1) {
     output = input;
     return;
@@ -201,18 +202,17 @@ void convTri(cv::Mat& input, cv::Mat& output, float r, int s) {
   }
 }
 
-void convConst(const std::string &type, cv::Mat& input, cv::Mat& output, float p, int s) {
+void convConst(const std::string &type, CellArray& input, CellArray& output, float p, int s) {
     int ns[3], ms[3];
 
     // get input image dimemsion
     ns[0] = input.rows;
     ns[1] = input.cols;
-    ns[2] = input.channels();
+    ns[2] = input.channels;
     int d = ns[2];
 
-    int inputDepth = input.depth();
     int m = ns[0] < ns[1] ? ns[0] : ns[1];
-    if (inputDepth != CV_32F || m < 4) {
+    if (input.type != SINGLE_CLASS || m < 4) {
       wrError("A must be a 4x4 or bigger 2D or 3D float array.");
     }
 
@@ -230,7 +230,7 @@ void convConst(const std::string &type, cv::Mat& input, cv::Mat& output, float p
     ms[0] = ns[0] / s;
     ms[1] = ns[1] / s;
     ms[2] = ns[2];
-    wrCreateCVMat(ms[0], ms[1], input.type(), output);
+    output.create(ms[0], ms[1], ms[2], SINGLE_CLASS);
     float* B = (float*)output.data;
 
     // perform appropriate type of convolution
@@ -264,14 +264,14 @@ void convConst(const std::string &type, cv::Mat& input, cv::Mat& output, float p
     }
 }
 
-cv::Mat convTri(cv::Mat& input, float r, int s) {
-  cv::Mat output;
+CellArray convTri(CellArray& input, float r, int s) {
+  CellArray output;
   convTri(input, output, r, s);
   return output;
 }
 
-cv::Mat convConst(const std::string &type, cv::Mat& input, float r, int s) {
-  cv::Mat output;
+CellArray convConst(const std::string &type, CellArray& input, float r, int s) {
+  CellArray output;
   convConst(type, input, output, r, s);
   return output;
 }
