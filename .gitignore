@@ -1,7 +1,9 @@
 *.o
+*.a
 *.out
 image/
 Makefile
+demo
 
 # cmake file
 *.cmake

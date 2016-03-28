@@ -48,7 +48,7 @@ private:
 
 template<typename _Tp> inline
 _Tp& CellArray::at(int i0, int i1, int i2) {
-  const _Tp* u = (_Tp*)data;
+  _Tp* u = (_Tp*)data;
   return u[i2 * rows * cols + i1 * rows + i0];
 }
 
