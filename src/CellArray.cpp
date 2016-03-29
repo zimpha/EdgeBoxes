@@ -140,7 +140,52 @@ CellArray::~CellArray() {
   release();
 }
 
-CellArray CellArray::operator=(const CellArray& ca) {
-  CellArray res(ca);
-  return res;
+CellArray& CellArray::operator=(const CellArray& ca) {
+  if (total() != ca.total()) {
+    delete[] data;
+    data = new uint8_t[ca.total()];
+  }
+  rows = ca.rows;
+  cols = ca.cols;
+  channels = ca.channels;
+  step = ca.step;
+  type = ca.type;
+  memcpy(data, ca.data, sizeof(uint8_t) * (rows * cols * channels * step));
+  return *this;
+}
+
+void mergeCellArray(CellArray a[], int num, CellArray &output) {
+  if (num == 0) return;
+  int total = 0;
+  for (int i = 0; i < num; ++i) {
+    if (a[i].rows != a[0].rows || a[i].cols != a[0].cols || a[i].type != a[0].type) {
+      wrError("the size and type should be the same");
+    }
+    total += a[i].channels;
+  }
+  output.create(a[0].rows, a[0].cols, total, a[0].type);
+  uint8_t *u = output.data;
+  for (int i = 0; i < num; ++i) {
+    total = a[i].total();
+    memcpy(u, a[i].data, sizeof(uint8_t) * total);
+    u += total;
+  }
+}
+
+void mergeCellArray(std::vector<CellArray> &a, int num, CellArray &output) {
+  if (num == 0) return;
+  int total = 0;
+  for (int i = 0; i < num; ++i) {
+    if (a[i].rows != a[0].rows || a[i].cols != a[0].cols || a[i].type != a[0].type) {
+      wrError("the size and type should be the same");
+    }
+    total += a[i].channels;
+  }
+  output.create(a[0].rows, a[0].cols, total, a[0].type);
+  uint8_t *u = output.data;
+  for (int i = 0; i < num; ++i) {
+    total = a[i].total();
+    memcpy(u, a[i].data, sizeof(uint8_t) * total);
+    u += total;
+  }
 }

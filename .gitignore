@@ -3,7 +3,9 @@
 *.out
 image/
 Makefile
-demo
+
+# models
+model/
 
 # cmake file
 *.cmake

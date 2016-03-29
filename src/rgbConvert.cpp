@@ -1,6 +1,7 @@
 #include "imageUtil.h"
 #include "wrappers.h"
 #include "sse.h"
+#include <cstdlib>
 #include <cmath>
 #include <typeinfo>
 

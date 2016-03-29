@@ -1,6 +1,7 @@
 #ifndef _EDGE_BOXES_H
 #define _EDGE_BOXES_H
 
+#include "CellArray.h"
 #include <cstdlib>
 #include <cstring>
 #include <vector>
@@ -82,7 +83,10 @@ public:
   float _minScore, _maxAspectRatio, _minBoxArea;
   int _maxBoxes;
 
-  void generate(Boxes &boxes, arrayf &E, arrayf &O, arrayf &V);
+  void initialize(float alpha, float beta, float eta, float minScore, int maxBoxes,
+                  float edgeMinMag, float edgeMergeThr, float clusterMinMag,
+                  float maxAspectRatio, float minBoxArea, float gamma, float kappa);
+  Boxes generate(CellArray &E, CellArray &O);
 
 private:
   // edge segment information (see clusterEdges)
@@ -105,6 +109,8 @@ private:
   arrayf _sWts;
   arrayi _sDone, _sMap, _sIds;
   int _sId;
+
+  void generate(Boxes &boxes, arrayf &E, arrayf &O, arrayf &V);
 
   // helper routines
   void clusterEdges(arrayf &E, arrayf &O, arrayf &V);

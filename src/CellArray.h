@@ -3,6 +3,7 @@
 
 #include "global.h"
 #include "opencv2/opencv.hpp"
+#include <vector>
 
 /**
  * Matlab Matrix like data structure, elements are stored in Column-major order
@@ -23,7 +24,9 @@ public:
   void release();
   void create(int _rows, int _cols, int _channels = 1, int _type = UINT8_CLASS);
 
-  CellArray operator=(const CellArray& ca);
+  CellArray& operator=(const CellArray& ca);
+
+  int total() const;
 
   //! access matrix elements, i0-th row, i1-th col, i2-th channel
   template<typename _Tp> _Tp& at(int i0 = 0, int i1 = 0, int i2 = 0);
@@ -45,6 +48,10 @@ private:
   template<typename T> void copyFromMatRawData(T *input);
   template<typename T> void copyToMatRawData(T *output) const;
 };
+
+inline int CellArray::total() const {
+  return rows * cols * channels * step;
+}
 
 template<typename _Tp> inline
 _Tp& CellArray::at(int i0, int i1, int i2) {
@@ -90,5 +97,6 @@ void CellArray::multiply(T k) {
 }
 
 void mergeCellArray(CellArray a[], int num, CellArray &output);
+void mergeCellArray(std::vector<CellArray> &a, int num, CellArray &output);
 
 #endif

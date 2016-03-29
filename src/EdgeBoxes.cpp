@@ -10,6 +10,47 @@ T clamp(T val, T lo, T hi) {
 
 void boxesNms(Boxes &boxes, float thr, float eta, int maxBoxes);
 
+void EdgeBoxes::initialize(float alpha, float beta, float eta, float minScore, int maxBoxes,
+                float edgeMinMag, float edgeMergeThr, float clusterMinMag,
+                float maxAspectRatio, float minBoxArea, float gamma, float kappa) {
+  _alpha = alpha;
+  _beta = beta;
+  _eta = eta;
+  _minScore = minScore;
+  _maxBoxes = maxBoxes;
+  _edgeMinMag = edgeMinMag;
+  _edgeMergeThr = edgeMergeThr;
+  _clusterMinMag = clusterMinMag;
+  _maxAspectRatio = maxAspectRatio;
+  _minBoxArea = minBoxArea;
+  _gamma = gamma;
+  _kappa = kappa;
+
+  // initialize step sizes
+  _scStep = sqrt(1 / _alpha);
+  _arStep = (1 + _alpha) / (2 * _alpha);
+  _rcStepRatio = (1 - _alpha) / (1 + _alpha);
+
+  // create _scaleNorm
+  _scaleNorm.resize(10000);
+  for (int i = 0; i < 10000; ++i) {
+    _scaleNorm[i] = pow(1.f / i, _kappa);
+  }
+}
+
+Boxes EdgeBoxes::generate(CellArray &E, CellArray &O) {
+  int h = E.rows, w = E.cols;
+  arrayf edge, orient;
+  edge.init(h, w, (float*)E.data);
+  orient.init(h, w, (float*)O.data);
+  // TODO: optionally create memory for visualization
+  arrayf V;
+
+  Boxes boxes;
+  generate(boxes, edge, orient, V);
+  return boxes;
+}
+
 void EdgeBoxes::generate(Boxes &boxes, arrayf &E, arrayf &O, arrayf &V) {
   clusterEdges(E, O, V);
   prepDataStructs(E);
@@ -182,18 +223,6 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
 
 void EdgeBoxes::prepDataStructs(arrayf &E) {
   int c, r, i;
-
-  // initialize step sizes
-  _scStep = sqrt(1 / _alpha);
-  _arStep = (1 + _alpha) / (2 * _alpha);
-  _rcStepRatio = (1 - _alpha) / (1 + _alpha);
-
-  // create _scaleNorm
-  // FIXME: initialize in the beginning
-  _scaleNorm.resize(10000);
-  for (i = 0; i < 10000; ++i) {
-    _scaleNorm[i] = pow(1.f / i, _kappa);
-  }
 
   // create _segIImg
   arrayf E1(h, w);
