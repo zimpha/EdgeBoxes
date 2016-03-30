@@ -101,6 +101,7 @@ void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &c
     imResample(H, chns[k++], cv::Size(0, 0), std::max(1.0, (double)s / shrink), std::max(1.0, (double)s / shrink));
   }
   CellArray tmp;
+
   mergeCellArray(chns, k, tmp);
   assert(tmp.channels == nChns);
   float chnSm = chnSmooth / shrink;
@@ -110,6 +111,8 @@ void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &c
 }
 
 void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
+  // store original size of image
+  int oRows = I.rows, oCols = I.cols;
   // pad image, making divisible by 4
   int r = imWidth / 2;
   std::vector<int> p = {r, r, r, r};
@@ -124,7 +127,6 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
     I = rgbConvert(I, "rgb");
     I = convTri(I, 1.0f);
   }
-
   const int h = I.rows, w = I.cols, Z = I.channels;
   const int h1 = (int)ceil(double(h - imWidth) / stride);
   const int w1 = (int)ceil(double(w - imWidth) / stride);
@@ -265,7 +267,9 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
   if (sharpen == 0) t *= 2;
   else if (sharpen == 1) t *= 1.8;
   else t *= 1.66;
-  E.multiply(t);
+  std::cerr << std::endl;
+  E.crop(r, oRows + r, r, oCols + r);
+  E.multiply<float>(t);
   E = convTri(E, 1);
 
   // compute approximate orientation O from edges E

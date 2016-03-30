@@ -147,9 +147,9 @@ void imResample(CellArray& input, CellArray& output, cv::Size dsize, double fx, 
     void *A = input.data;
     void *B = output.data;
     if (input.type == DOUBLE_CLASS) {
-      resample((double*)A, (double*)B, ns[0], ns[1], ms[0], ms[1], nChannels, (double)norm);
+      resample((double*)A, (double*)B, ns[0], ms[0], ns[1], ms[1], nChannels, (double)norm);
     } else if (input.type == SINGLE_CLASS) {
-      resample((float*)A, (float*)B, ns[0], ns[1], ms[0], ms[1], nChannels, (float)norm);
+      resample((float*)A, (float*)B, ns[0], ms[0], ns[1], ms[1], nChannels, (float)norm);
     } else if (input.type == UINT8_CLASS) {
       int n = ns[0] * ns[1] * nChannels;
       int m = ms[0] * ms[1] * nChannels;
@@ -158,6 +158,7 @@ void imResample(CellArray& input, CellArray& output, cv::Size dsize, double fx, 
       for (int i = 0; i < n; ++i) A1[i] = (float)((uchar*)A)[i];
       resample(A1, B1, ns[0], ms[0], ns[1], ms[1], nChannels, float(norm));
       for (int i = 0; i < m; ++i) ((uchar*)B)[i] = (uchar)(B1[i] + .5);
+      alFree(A1); alFree(B1);
     } else {
       wrError("Unsupported image type.");
     }

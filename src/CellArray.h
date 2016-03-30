@@ -21,6 +21,8 @@ public:
   cv::Mat toCvMat() const;
   void fromCvMat(const cv::Mat &m);
 
+  void crop(int r1, int r2, int c1, int c2);
+
   void release();
   void create(int _rows, int _cols, int _channels = 1, int _type = UINT8_CLASS);
 

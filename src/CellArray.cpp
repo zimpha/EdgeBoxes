@@ -1,11 +1,11 @@
 #include "CellArray.h"
 #include "wrappers.h"
 
-CellArray::CellArray():type(-1), rows(0), cols(0), channels(0), data(NULL) {
+CellArray::CellArray():type(-1), rows(0), cols(0), channels(0), data(NULL), step(0) {
 }
 
 CellArray::CellArray(int _rows, int _cols, int _type, int _channels) {
-  data = NULL;
+  data = NULL; step = 0;
   create(_rows, _cols, _channels, _type);
 }
 
@@ -15,8 +15,8 @@ CellArray::CellArray(const CellArray &ca) {
   channels = ca.channels;
   step = ca.step;
   type = ca.type;
-  data = new uint8_t[rows * cols * channels * step];
-  memcpy(data, ca.data, sizeof(uint8_t) * (rows * cols * channels * step));
+  data = new uint8_t[total()];
+  memcpy(data, ca.data, sizeof(uint8_t) * total());
 }
 
 CellArray::CellArray(const cv::Mat &m) {
@@ -35,7 +35,7 @@ void CellArray::fromCvMat(const cv::Mat &m) {
   else if (m.depth() == CV_32F) step = sizeof(float);
   else if (m.depth() == CV_64F) step = sizeof(double);
   else wrError("Unsupported type");
-  data = new uint8_t[rows * cols * channels * step];
+  data = new uint8_t[total()];
   if (m.isContinuous()) {
     if (m.depth() == CV_8U) {
       type = UINT8_CLASS;
@@ -99,6 +99,22 @@ cv::Mat CellArray::toCvMat() const {
   return res;
 }
 
+void CellArray::crop(int r1, int r2, int c1, int c2) {
+  int tr = rows, tc = cols;
+  rows = r2 - r1;
+  cols = c2 - c1;
+  uint8_t *u = new uint8_t[total()];
+  for (int k = 0; k < channels; ++k) {
+    uint8_t *v = u + k * cols * rows * step;
+    for (int c = 0; c < cols; ++c) {
+      uint8_t *w = v + c * rows * step;
+      memcpy(w, data + (k * tc * tr + (c1 + c) * tr + r1) * step, sizeof(uint8_t) * rows * step);
+    }
+  }
+  delete[] data;
+  data = u;
+}
+
 void CellArray::release() {
   if (data == NULL) return;
   delete[] data;
@@ -133,7 +149,7 @@ void CellArray::create(int _rows, int _cols, int _channels, int _type) {
   cols = _cols;
   channels = _channels;
   type = _type;
-  data = new uint8_t[rows * cols * channels * step];
+  data = new uint8_t[total()];
 }
 
 CellArray::~CellArray() {
@@ -150,7 +166,7 @@ CellArray& CellArray::operator=(const CellArray& ca) {
   channels = ca.channels;
   step = ca.step;
   type = ca.type;
-  memcpy(data, ca.data, sizeof(uint8_t) * (rows * cols * channels * step));
+  memcpy(data, ca.data, sizeof(uint8_t) * total());
   return *this;
 }
 

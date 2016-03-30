@@ -102,8 +102,8 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
       for (i = 0; i < vs.size(); ++i) if (vs[i] < minv) {
         minv = vs[i]; j = i;
       }
-      sumv += minv; c0 = cs[j], r0 = rs[j];
-      if (minv < 1000) vs[j] = 1000;
+      sumv += minv;
+      if (minv < 1000) vs[j] = 1000, c0 = cs[j], r0 = rs[j];
     }
     ++_segCnt;
   }
@@ -262,14 +262,14 @@ void EdgeBoxes::prepDataStructs(arrayf &E) {
   for (c = 0; c < w; ++c) {
     int s = 0, s1;
     // FIXME: maybe clear _vIdxs[c] first
-    _vIdxs[c].push_back(s);
+    _vIdxs[c].clear(); _vIdxs[c].push_back(s);
     for (r = 0; r < h; ++r) {
       int s1 = _segIds.at(c, r);
       if (s1 != s) {
         s = s1;
         _vIdxs[c].push_back(s);
       }
-      _vIdxImg.at(c, r) = int(_vIdxs.size()) - 1;
+      _vIdxImg.at(c, r) = int(_vIdxs[c].size()) - 1;
     }
   }
 
@@ -307,6 +307,7 @@ void EdgeBoxes::scoreAllBoxes(Boxes &boxes) {
   // score all boxes, refine top candidates, perform nms
   int i, k(0), m = boxes.size();
   for (i = 0; i < m; ++i) {
+    if (i % 1000 == 0) std::cerr << i << std::endl;
     scoreBox(boxes[i]);
     if (!boxes[i].s) continue;
     ++k;
