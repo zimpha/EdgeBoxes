@@ -151,7 +151,7 @@ void normalize( iT *I, oT *O, int n, oT nrm ) {
 }
 
 template<class iT, class oT>
-void _rgbConvert(iT* I, oT* O, int n, int d, int flag, oT nrm) {
+void rgbConvert(iT* I, oT* O, int n, int d, int flag, oT nrm) {
   int i, n1=d*(n<1000?n/10:100); oT thr = oT(1.001);
   if(flag>1 && nrm==1) for(i=0; i<n1; i++) if(I[i]>thr)
     wrError("For floats all values in I must be smaller than 1.");
@@ -165,17 +165,17 @@ void _rgbConvert(iT* I, oT* O, int n, int d, int flag, oT nrm) {
   else wrError("Unknown flag.");
 }
 
-void rgbConvert(CellArray& input, CellArray& output, const std::string colorSpace, bool useSingle) {
+void rgbConvert(CellArray& input, CellArray& output, const int colorSpace, bool useSingle) {
   // TODO: check input matrix
 
   // get flag
   int flag = -1;
-  if (colorSpace == "gray") flag = 0;
-  else if (colorSpace == "rgb") flag = 1;
-  else if (colorSpace == "luv") flag = 2;
-  else if (colorSpace == "hsv") flag = 3;
-  else if (colorSpace == "orig") flag = 4;
-  else wrError("unknown color space: " + colorSpace);
+  if (colorSpace == CS_GRAY) flag = 0;
+  else if (colorSpace == CS_RGB) flag = 1;
+  else if (colorSpace == CS_LUV) flag = 2;
+  else if (colorSpace == CS_HSV) flag = 3;
+  else if (colorSpace == CS_ORIG) flag = 4;
+  else wrError("unknown color space");
 
   int inputChannel = input.channels;
   int outputType = useSingle ? SINGLE_CLASS : DOUBLE_CLASS;
@@ -199,23 +199,23 @@ void rgbConvert(CellArray& input, CellArray& output, const std::string colorSpac
     wrError("Input image must have third dimension d==1 or (d/3)*3==d.");
   }
   if (input.type == SINGLE_CLASS && !useSingle) {
-    _rgbConvert((float*)I, (double*)O, n, inputChannel, flag, 1.0);
+    rgbConvert((float*)I, (double*)O, n, inputChannel, flag, 1.0);
   } else if (input.type == SINGLE_CLASS && useSingle) {
-    _rgbConvert((float*)I, (float*)O, n, inputChannel, flag, 1.0f);
+    rgbConvert((float*)I, (float*)O, n, inputChannel, flag, 1.0f);
   } else if (input.type == DOUBLE_CLASS && !useSingle) {
-    _rgbConvert((double*)I, (double*)O, n, inputChannel, flag, 1.0);
+    rgbConvert((double*)I, (double*)O, n, inputChannel, flag, 1.0);
   } else if (input.type == DOUBLE_CLASS && useSingle) {
-    _rgbConvert((double*)I, (float*)O, n, inputChannel, flag, 1.0f);
+    rgbConvert((double*)I, (float*)O, n, inputChannel, flag, 1.0f);
   } else if (input.type == UINT8_CLASS && !useSingle) {
-    _rgbConvert((unsigned char*)I, (double*)O, n, inputChannel, flag, 1.0 / 255);
+    rgbConvert((unsigned char*)I, (double*)O, n, inputChannel, flag, 1.0 / 255);
   } else if (input.type == UINT8_CLASS && useSingle) {
-    _rgbConvert((unsigned char*)I, (float*)O, n, inputChannel, flag, 1.0f / 255);
+    rgbConvert((unsigned char*)I, (float*)O, n, inputChannel, flag, 1.0f / 255);
   } else {
     wrError("Unsupported image type.");
   }
 }
 
-CellArray rgbConvert(CellArray& input, const std::string colorSpace, bool useSingle) {
+CellArray rgbConvert(CellArray& input, const int colorSpace, bool useSingle) {
   CellArray output;
   rgbConvert(input, output, colorSpace, useSingle);
   return output;

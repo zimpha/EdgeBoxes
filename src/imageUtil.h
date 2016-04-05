@@ -1,6 +1,7 @@
 #ifndef _IMAGE_UTIL_H
 #define _IMAGE_UTIL_H
 
+#include "global.h"
 #include "CellArray.h"
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -43,8 +44,8 @@
  * @param colorSpace ['luv'] other choices include: 'gray', 'hsv', 'rgb', 'orig'
  * @param useSingle  [true] determines output type (faster if useSingle)
  */
-void rgbConvert(CellArray& input, CellArray& output, const std::string colorSpace = "luv", bool useSingle = true);
-CellArray rgbConvert(CellArray& input, const std::string colorSpace = "luv", bool useSingle = true);
+void rgbConvert(CellArray& input, CellArray& output, const int colorSpace = CS_LUV, bool useSingle = true);
+CellArray rgbConvert(CellArray& input, const int colorSpace = CS_LUV, bool useSingle = true);
 
 /**
  * Resizes an image.

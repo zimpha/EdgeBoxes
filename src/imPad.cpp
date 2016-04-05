@@ -99,7 +99,7 @@ void imPad(CellArray& input, CellArray& output, std::vector<int> &pad, const std
   } else if (input.type == SINGLE_CLASS) {
     imPad((float*)A, (float*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, float(val));
   } else if (input.type == UINT8_CLASS) {
-    imPad((uchar*)A, (uchar*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, uint8_t(val));
+    imPad((uint8_t*)A, (uint8_t*)B, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, uint8_t(val));
   } else {
     wrError("Unsupported image type.");
   }

@@ -82,7 +82,7 @@ private:
   uint32_t* buildLookup(int *dims, int w);
   void buildLookupSs(uint32_t *&cids1, uint32_t *&cids2, int *dims, int w, int m);
 
-  void getOrient();
+  void edgeNms(CellArray &E, CellArray &O, int r, int s, float m, int nThreads);
 };
 
 #endif

@@ -100,10 +100,10 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
       float minv = 1000;
       j = 0;
       for (i = 0; i < vs.size(); ++i) if (vs[i] < minv) {
-        minv = vs[i]; j = i;
+        minv = vs[i]; j = i; c0 = cs[j], r0 = rs[j];
       }
       sumv += minv;
-      if (minv < 1000) vs[j] = 1000, c0 = cs[j], r0 = rs[j];
+      if (minv < 1000) vs[j] = 1000;
     }
     ++_segCnt;
   }
@@ -135,7 +135,8 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
           j = _segIds.at(c + cd, r + rd);
         }
       }
-      if (j) _segIds.at(c, r) = j, ++i;
+      _segIds.at(c, r) = j;
+      if (j > 0) ++i;
     }
   }
 
@@ -247,8 +248,7 @@ void EdgeBoxes::prepDataStructs(arrayf &E) {
   _hIdxs.resize(h); _hIdxImg.init(h, w);
   for (r = 0; r < h; ++r) {
     int s = 0, s1;
-    // FIXME: maybe clear _hIdxs[r] first?
-    _hIdxs[r].push_back(s);
+    _hIdxs[r].clear(); _hIdxs[r].push_back(s);
     for (c = 0; c < w; ++c) {
       s1 = _segIds.at(c, r);
       if (s1 != s) {
@@ -261,7 +261,6 @@ void EdgeBoxes::prepDataStructs(arrayf &E) {
   _vIdxs.resize(w); _vIdxImg.init(h, w);
   for (c = 0; c < w; ++c) {
     int s = 0, s1;
-    // FIXME: maybe clear _vIdxs[c] first
     _vIdxs[c].clear(); _vIdxs[c].push_back(s);
     for (r = 0; r < h; ++r) {
       int s1 = _segIds.at(c, r);
@@ -307,7 +306,7 @@ void EdgeBoxes::scoreAllBoxes(Boxes &boxes) {
   // score all boxes, refine top candidates, perform nms
   int i, k(0), m = boxes.size();
   for (i = 0; i < m; ++i) {
-    if (i % 1000 == 0) std::cerr << i << std::endl;
+    //if (i % 1000 == 0) std::cerr << i << std::endl;
     scoreBox(boxes[i]);
     if (!boxes[i].s) continue;
     ++k;
@@ -364,6 +363,7 @@ void EdgeBoxes::scoreBox(Box &box) {
   for (i = rs; i <= re; ++i) if ((j = _vIdxs[c1][i]) > 0 && sDone[j] != sId) {
     sIds[n] = j; sWts[n] = 1; sDone[j] = sId; sMap[j] = n++;
   }
+  //std::cerr << "start " << n << std::endl;
   // follow connected paths and set weights accordingly (w=1 means remove)
   // looks like just a bfs
   for (i = 0; i < n; ++i) {
@@ -408,25 +408,29 @@ void EdgeBoxes::refineBox(Box &box) {
     // search over r start
     B = box; B.r -= rStep; B.h += rStep; scoreBox(B);
     if (B.s <= box.s) {
-      B.r += rStep * 2; B.h -= rStep * 2; scoreBox(B);
+      B=box;
+      B.r += rStep; B.h -= rStep; scoreBox(B);
     }
     if (B.s > box.s) box = B;
     // search over r end
     B = box; B.h += rStep; scoreBox(B);
     if (B.s <= box.s) {
-      B.h -= rStep * 2; scoreBox(B);
+      B=box;
+      B.h -= rStep; scoreBox(B);
     }
     if (B.s > box.s) box = B;
     // search over c start
     B = box; B.c -= cStep; B.w += cStep; scoreBox(B);
     if (B.s <= box.s) {
-      B.c += cStep * 2; B.w -= cStep * 2; scoreBox(B);
+      B = box;
+      B.c += cStep; B.w -= cStep; scoreBox(B);
     }
     if (B.s > box.s) box = B;
     // search over c end
     B = box; B.w += cStep; scoreBox(B);
     if (B.s <= box.s) {
-      B.w -= cStep * 2; scoreBox(B);
+      B=box;
+      B.w -= cStep; scoreBox(B);
     }
     if (B.s > box.s) box = B;
   }

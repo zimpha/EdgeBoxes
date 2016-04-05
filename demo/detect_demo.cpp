@@ -6,12 +6,12 @@
 #include "EdgeBoxes.h"
 
 int main() {
-  cv::Mat bgr = cv::imread("./image/pepper.png", 1);
-  cv::Mat img;
-  cv::cvtColor(bgr, img, CV_BGR2RGB);
-
   try {
-    CellArray I(img), E, O;
+    CellArray I, E, O;
+    I.create(348, 600, 3, UINT8_CLASS);
+    FILE* fp = fopen("/home/zimpha/EdgeBoxes/image/image.bin", "rb");
+    fread(I.data, 1, 348 * 600 * 3, fp);
+
     EdgeDetector detector;
     EdgeBoxes edgeBoxes;
     detector.loadModel("./model/model.bin");
@@ -20,14 +20,17 @@ int main() {
     detector.edgesDetect(I, E, O);
     clock_t ed = clock();
     std::cerr << double(ed - st) / CLOCKS_PER_SEC << std::endl;
-    int cnt = 0;
+    int scnt = 0;
     for (int i = 0; i < E.rows; ++i) {
       for (int j = 0; j < E.cols; ++j) {
-        cnt += E.at<float>(i, j) > 0.1;
+        scnt += E.at<float>(i,j) > .1;
       }
     }
-    std::cerr << cnt << std::endl;
+    std::cerr << scnt << std::endl;
+    st = clock();
     Boxes boxes = edgeBoxes.generate(E, O);
+    ed = clock();
+    std::cerr << double(ed - st) / CLOCKS_PER_SEC << std::endl;
   } catch (const std::string &e) {
     std::cerr << e << std::endl;
   }

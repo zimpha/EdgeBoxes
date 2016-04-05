@@ -65,7 +65,7 @@ struct Box {
   }
   float overlap(const Box &rhs) const {
     if (h <= 0 || w <= 0) return 0;
-    if (rhs.h <= 0 || rhs.w <= 0) return 0;
+    if (h >= rhs.r + rhs.h || w >= rhs.c + rhs.w) return 0;
     int r0 = std::max(r, rhs.r), r1 = std::min(r + h, rhs.r + rhs.h);
     int c0 = std::max(c, rhs.c), c1 = std::min(c + w, rhs.c + rhs.w);
     float areai = w * h, areaj = rhs.w * rhs.h;
