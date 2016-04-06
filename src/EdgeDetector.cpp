@@ -98,7 +98,6 @@ void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &c
   rgbConvert(I, luv);
   imResample(luv, chns[0], cv::Size(0, 0), 1.0 / shrink, 1.0 / shrink);
   int k = 1;
-  clock_t st = clock();
   for (int i = 1, s = 1; i <= 2; ++i, s <<= 1) {
     if (s == shrink) I1 = chns[0];
     else imResample(luv, I1, cv::Size(0, 0), 1.0 / s, 1.0 / s);
@@ -108,8 +107,6 @@ void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &c
     imResample(M, chns[k++], cv::Size(0, 0), (double)s / shrink, (double)s / shrink);
     imResample(H, chns[k++], cv::Size(0, 0), std::max(1.0, (double)s / shrink), std::max(1.0, (double)s / shrink));
   }
-  clock_t ed = clock();
-  std::cerr << "time elapsed: " << (double)(ed - st) / CLOCKS_PER_SEC << std::endl;
   CellArray tmp;
   mergeCellArray(chns, k, tmp);
   assert(tmp.channels == nChns);
@@ -135,8 +132,9 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
   clock_t st = clock();
   featureExtract(I, chnsReg, chnsSim);
   if (sharpen) {
-    I = rgbConvert(I, CS_RGB);
-    I = convTri(I, 1.0f);
+    CellArray tmp;
+    convTri(tmp, I, 1.0f);
+    I.swap(tmp);
   }
 
   const int h = I.rows, w = I.cols, Z = I.channels;

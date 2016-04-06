@@ -22,6 +22,7 @@ int main() {
     for (size_t i = 0; i < filenames.size(); ++i) {
       cv::Mat src = cv::imread(filenames[i]), dst;
       //std::cerr << filenames[i] << std::endl;
+      if (filenames[i] != "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test/2018.jpg") continue;
       cv::cvtColor(src, dst, CV_BGR2RGB);
       dst.convertTo(src, CV_32FC3, 1.0 / 255);
       I.fromCvMat(src);

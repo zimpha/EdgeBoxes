@@ -60,6 +60,10 @@ void CellArray::crop(int r1, int r2, int c1, int c2) {
   data = u;
 }
 
+void CellArray::swap(CellArray &ca) {
+  std::swap(data, ca.data);
+}
+
 void CellArray::release() {
   if (data == NULL) return;
   wrFree(data);

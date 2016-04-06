@@ -34,6 +34,7 @@ public:
   float& at(int i0 = 0, int i1 = 0, int i2 = 0);
   const float& at(int i0 = 0, int i1 = 0, int i2 = 0) const;
   void multiply(float k);
+  void swap(CellArray &ca);
 
   //! the number of rows, columns and channels
   int rows, cols, channels;

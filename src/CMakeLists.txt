@@ -10,7 +10,7 @@ add_library(image STATIC ${IMAGE_LIB_SRC})
 target_link_libraries(image ${OpenCV_LIBS})
 set_target_properties(image PROPERTIES VERSION 1.0.0 SOVERSION 1)
 
-set(CONV_LIB_SRC wrappers.cpp convUtil.cpp CellArray.cpp CellArray.h)
+set(CONV_LIB_SRC wrappers.cpp convUtil.cpp convConstMex.h CellArray.cpp CellArray.h)
 add_library(conv STATIC ${CONV_LIB_SRC})
 target_link_libraries(conv ${OpenCV_LIBS})
 set_target_properties(conv PROPERTIES VERSION 1.0.0 SOVERSION 1)
