@@ -44,8 +44,9 @@
  * @param colorSpace ['luv'] other choices include: 'gray', 'hsv', 'rgb', 'orig'
  * @param useSingle  [true] determines output type (faster if useSingle)
  */
-void rgbConvert(CellArray& input, CellArray& output, const int colorSpace = CS_LUV, bool useSingle = true);
-CellArray rgbConvert(CellArray& input, const int colorSpace = CS_LUV, bool useSingle = true);
+void rgbConvert(CellArray& input, CellArray& output, const int colorSpace = CS_LUV);
+CellArray rgbConvert(CellArray& input, const int colorSpace = CS_LUV);
+float* rgbConvert(float* image, int h, int w, int d, int colorSpace = CS_LUV);
 
 /**
  * Resizes an image.

@@ -212,56 +212,38 @@ void convConst(const std::string &type, CellArray& input, CellArray& output, flo
     int d = ns[2];
 
     int m = ns[0] < ns[1] ? ns[0] : ns[1];
-    if (input.type != SINGLE_CLASS || m < 4) {
-      wrError("A must be a 4x4 or bigger 2D or 3D float array.");
-    }
+    if (m < 4) wrError("A must be a 4x4 or bigger 2D or 3D float array.");
 
     // extract inputs
-    float* A = (float*)input.data;
+    float* A = input.data;
     int r = (int)p;
-    if (s < 1) {
-      wrError("Invalid sampling value s");
-    }
-    if (r < 0) {
-      wrError("Invalid radius r");
-    }
+    if (s < 1) wrError("Invalid sampling value s");
+    if (r < 0) wrError("Invalid radius r");
 
     // create output array
     ms[0] = ns[0] / s;
     ms[1] = ns[1] / s;
     ms[2] = ns[2];
-    output.create(ms[0], ms[1], ms[2], SINGLE_CLASS);
-    float* B = (float*)output.data;
+    output.create(ms[0], ms[1], ms[2]);
+    float* B = output.data;
 
     // perform appropriate type of convolution
     if (type == "convBox") {
-      if (r >= m / 2) {
-        wrError("mask larger than image (r too large)");
-      }
+      if (r >= m / 2) wrError("mask larger than image (r too large)");
       _convBox(A, B, ns[0], ns[1], d, r, s);
     } else if (type == "convTri") {
-      if (r >= m / 2) {
-        wrError("mask larger than image (r too large)");
-      }
+      if (r >= m / 2) wrError("mask larger than image (r too large)");
       _convTri(A, B, ns[0], ns[1], d, r, s);
     } else if (type == "conv11") {
-      if (s > 2) {
-        wrError("conv11 can sample by at most s=2");
-      }
+      if (s > 2) wrError("conv11 can sample by at most s=2");
       _conv11(A, B, ns[0], ns[1], d, r, s);
     } else if (type == "convTri1") {
-      if (s > 2) {
-        wrError("convTri1 can sample by at most s=2");
-      }
+      if (s > 2) wrError("convTri1 can sample by at most s=2");
       _convTri1(A, B, ns[0], ns[1], d, r, s);
     } else if (type == "convMax") {
-      if (s > 1) {
-        wrError("convMax cannot sample");
-      }
+      if (s > 1) wrError("convMax cannot sample");
       _convMax(A, B, ns[0], ns[1], d, r);
-    } else {
-      wrError("Invalid type.");
-    }
+    } else wrError("Invalid type.");
 }
 
 CellArray convTri(CellArray& input, float r, int s) {

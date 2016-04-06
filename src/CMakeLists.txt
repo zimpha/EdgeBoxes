@@ -5,7 +5,7 @@ add_library(grad STATIC ${GRAD_LIB_SRC})
 target_link_libraries(grad ${OpenCV_LIBS})
 set_target_properties(grad PROPERTIES VERSION 1.0.0 SOVERSION 1)
 
-set(IMAGE_LIB_SRC imPad.cpp rgbConvert.cpp imResample.cpp wrappers.cpp CellArray.cpp CellArray.h)
+set(IMAGE_LIB_SRC imPad.cpp imPadMex.h rgbConvert.cpp rgbConvertMex.h imResample.cpp imResampleMex.h wrappers.cpp CellArray.cpp CellArray.h)
 add_library(image STATIC ${IMAGE_LIB_SRC})
 target_link_libraries(image ${OpenCV_LIBS})
 set_target_properties(image PROPERTIES VERSION 1.0.0 SOVERSION 1)

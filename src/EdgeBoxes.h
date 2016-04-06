@@ -31,7 +31,7 @@ public:
     h = _h;
     w = _w;
     data = _data;
-    isFree = false;
+    isFree = true;
   }
   T& at(size_t c, size_t r) {
     return data[c * h + r];

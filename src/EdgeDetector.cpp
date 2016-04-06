@@ -93,23 +93,23 @@ void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &c
   if (I.channels != 3) {
     wrError("input image must have 3 channels");
   }
-  CellArray luv, Ishrink;
-  rgbConvert(I, luv);
-  imResample(luv, Ishrink, cv::Size(0, 0), 1.0 / shrink, 1.0 / shrink);
+  CellArray luv, M, O, H, I1, I2;
   std::vector<CellArray> chns(nChns);
-  int k = 0;
-  chns[k++] = Ishrink;
+  rgbConvert(I, luv);
+  imResample(luv, chns[0], cv::Size(0, 0), 1.0 / shrink, 1.0 / shrink);
+  int k = 1;
+  clock_t st = clock();
   for (int i = 1, s = 1; i <= 2; ++i, s <<= 1) {
-    CellArray I1, I2;
-    if (s == shrink) I1 = Ishrink;
+    if (s == shrink) I1 = chns[0];
     else imResample(luv, I1, cv::Size(0, 0), 1.0 / s, 1.0 / s);
     convTri(I1, I2, grdSmooth);
-    CellArray M, O, H;
     gradientMag(I2, M, O, 0, normRad, .01);
     gradientHist(M, O, H, std::max(1, shrink / s), nOrients, 0);
     imResample(M, chns[k++], cv::Size(0, 0), (double)s / shrink, (double)s / shrink);
     imResample(H, chns[k++], cv::Size(0, 0), std::max(1.0, (double)s / shrink), std::max(1.0, (double)s / shrink));
   }
+  clock_t ed = clock();
+  std::cerr << "time elapsed: " << (double)(ed - st) / CLOCKS_PER_SEC << std::endl;
   CellArray tmp;
   mergeCellArray(chns, k, tmp);
   assert(tmp.channels == nChns);
@@ -132,6 +132,7 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
 
   // get feature
   CellArray chnsReg, chnsSim;
+  clock_t st = clock();
   featureExtract(I, chnsReg, chnsSim);
   if (sharpen) {
     I = rgbConvert(I, CS_RGB);
@@ -155,7 +156,7 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
   cids = buildLookup((int*)chnDims, imWidth / shrink);
   buildLookupSs(cids1, cids2, (int*)chnDims, imWidth / shrink, nCells);
 
-  E.create(outDims[0], outDims[1], outDims[2], SINGLE_CLASS);
+  E.create(outDims[0], outDims[1], outDims[2]);
   uint32_t *ind = new uint32_t[indDims[0] * indDims[1] * indDims[2]];
   float* chns = (float*)chnsReg.data;
   float* chnsSs = (float*)chnsSim.data;
@@ -283,7 +284,7 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
   else t *= 1.66;
 
   E.crop(r, oRows + r, r, oCols + r);
-  E.multiply<float>(t);
+  E.multiply(t);
   E = convTri(E, 1);
 
   // compute approximate orientation O from edges E
@@ -293,13 +294,13 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
   gradient(E_conv, Ox, Oy);
   gradient(Ox, Oxx, Oxy);
   gradient(Oy, Oxy, Oyy);
-  O.create(E.rows, E.cols, E.channels, E.type);
+  O.create(E.rows, E.cols, E.channels);
   for (int j = 0; j < O.cols; ++j) {
     for (int i = 0; i < O.rows; ++i) {
-      float val = Oyy.at<float>(i, j) * sgn(-Oxy.at<float>(i, j)) / (Oxx.at<float>(i, j) + 1e-5);
+      float val = Oyy.at(i, j) * sgn(-Oxy.at(i, j)) / (Oxx.at(i, j) + 1e-5);
       val = fmod(atan(val), PI);
       if (val < -1e-8) val += PI;
-      O.at<float>(i, j) = val;
+      O.at(i, j) = val;
     }
   }
 
@@ -337,12 +338,12 @@ void EdgeDetector::edgeNms(CellArray &E, CellArray &O, int r, int s, float m, in
   #pragma omp parallel for num_threads(nThreads)
   #endif
   for (int x = 0; x < w; ++x) for (int y = 0; y < h; ++y) {
-    float e = E.at<float>(y,x); if (!e) continue;
-    float coso = cos(O.at<float>(y,x)), sino = sin(O.at<float>(y,x));
+    float e = E.at(y,x); if (!e) continue;
+    float coso = cos(O.at(y,x)), sino = sin(O.at(y,x));
     for (int d = -r; d <= r; ++d) if (d) {
-      float e0 = interp((float*)E0.data, h, w, x + d * coso, y + d * sino);
+      float e0 = interp(E0.data, h, w, x + d * coso, y + d * sino);
       if (e < e0) {
-        E.at<float>(y,x) = 0;
+        E.at(y,x) = 0;
         break;
       }
     }
@@ -350,12 +351,12 @@ void EdgeDetector::edgeNms(CellArray &E, CellArray &O, int r, int s, float m, in
   // supress noisy edge estimates near boundaries
   s = std::min(s, std::min(w / 2, h / 2));
   for (int x = 0; x < s; ++x) for (int y = 0; y < h; ++y) {
-    E.at<float>(y, x) *= x / float(s);
-    E.at<float>(y, w - 1 - x) *= x / float(s);
+    E.at(y, x) *= x / float(s);
+    E.at(y, w - 1 - x) *= x / float(s);
   }
   for (int x = 0; x < w; ++x) for (int y = 0; y < s; ++y) {
-    E.at<float>(y, x) *= y / float(s);
-    E.at<float>(h - 1 - y, x) *= y / float(s);
+    E.at(y, x) *= y / float(s);
+    E.at(h - 1 - y, x) *= y / float(s);
   }
 }
 

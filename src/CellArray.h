@@ -12,7 +12,7 @@
 class CellArray {
 public:
   CellArray();
-  CellArray(int _rows, int _cols, int _channels = 1, int _type = UINT8_CLASS);
+  CellArray(int _rows, int _cols, int _channels = 1);
   CellArray(const CellArray &ca);
   CellArray(const cv::Mat &m);
 
@@ -24,76 +24,61 @@ public:
   void crop(int r1, int r2, int c1, int c2);
 
   void release();
-  void create(int _rows, int _cols, int _channels = 1, int _type = UINT8_CLASS);
+  void create(int _rows, int _cols, int _channels = 1);
 
   CellArray& operator=(const CellArray& ca);
 
   int total() const;
 
   //! access matrix elements, i0-th row, i1-th col, i2-th channel
-  template<typename _Tp> _Tp& at(int i0 = 0, int i1 = 0, int i2 = 0);
-  template<typename _Tp> const _Tp& at(int i0 = 0, int i1 = 0, int i2 = 0) const;
-  template<typename T> void multiply(T k);
+  float& at(int i0 = 0, int i1 = 0, int i2 = 0);
+  const float& at(int i0 = 0, int i1 = 0, int i2 = 0) const;
+  void multiply(float k);
 
-  //! the element type of matrix
-  int type;
   //! the number of rows, columns and channels
   int rows, cols, channels;
   //! pointer to the data
-  uint8_t* data;
+  float* data;
 
 private:
-  // implemented
-  int* refcount;
-  int step;
-
-  template<typename T> void copyFromMatRawData(T *input);
-  template<typename T> void copyToMatRawData(T *output) const;
+  void copyFromMatRawData(float *input);
+  void copyToMatRawData(float *output) const;
 };
 
 inline int CellArray::total() const {
-  return rows * cols * channels * step;
+  return rows * cols * channels;
 }
 
-template<typename _Tp> inline
-_Tp& CellArray::at(int i0, int i1, int i2) {
-  _Tp* u = (_Tp*)data;
-  return u[i2 * rows * cols + i1 * rows + i0];
+inline float& CellArray::at(int i0, int i1, int i2) {
+  return data[i2 * rows * cols + i1 * rows + i0];
 }
 
-template<typename _Tp> inline
-const _Tp& CellArray::at(int i0, int i1, int i2) const {
-  const _Tp* u = (_Tp*)data;
-  return u[i2 * rows * cols + i1 * rows + i0];
+inline const float& CellArray::at(int i0, int i1, int i2) const {
+  return data[i2 * rows * cols + i1 * rows + i0];
 }
 
-template<typename T> inline
-void CellArray::copyFromMatRawData(T *input) {
-  T* u = (T*)data;
+inline void CellArray::copyFromMatRawData(float *input) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
       for (int k = 0; k < channels; ++k) {
-        u[k * rows * cols + j * rows + i] = input[i * cols * channels + j * channels + k];
+        data[k * rows * cols + j * rows + i] = input[i * cols * channels + j * channels + k];
       }
     }
   }
 }
 
-template<typename T> inline
-void CellArray::copyToMatRawData(T *output) const {
-  T* u = (T*)data;
+inline void CellArray::copyToMatRawData(float *output) const {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
       for (int k = 0; k < channels; ++k) {
-        output[i * cols * channels + j * channels + k] = u[k * rows * cols + j * rows + i];
+        output[i * cols * channels + j * channels + k] = data[k * rows * cols + j * rows + i];
       }
     }
   }
 }
 
-template<typename T> inline
-void CellArray::multiply(T k) {
-  T* u = (T*)data;
+inline void CellArray::multiply(float k) {
+  float*u = data;
   int total = rows * cols * channels;
   while (total--) *(u++) *= k;
 }
