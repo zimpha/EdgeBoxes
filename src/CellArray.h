@@ -42,7 +42,7 @@ public:
   float* data;
 
 private:
-  void copyFromMatRawData(float *input);
+  void copyFromMatRawData(const float *input);
   void copyToMatRawData(float *output) const;
 };
 
@@ -58,7 +58,7 @@ inline const float& CellArray::at(int i0, int i1, int i2) const {
   return data[i2 * rows * cols + i1 * rows + i0];
 }
 
-inline void CellArray::copyFromMatRawData(float *input) {
+inline void CellArray::copyFromMatRawData(const float *input) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
       for (int k = 0; k < channels; ++k) {

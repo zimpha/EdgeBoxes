@@ -19,17 +19,15 @@ int main() {
     cv::String folder = "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test";
     cv::glob(folder, filenames);
     clock_t st = clock();
+    cv::String name = filenames[5];
+    std::cerr << name << std::endl;
     for (size_t i = 0; i < filenames.size(); ++i) {
       cv::Mat src = cv::imread(filenames[i]), dst;
-      //std::cerr << filenames[i] << std::endl;
-      if (filenames[i] != "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test/2018.jpg") continue;
       cv::cvtColor(src, dst, CV_BGR2RGB);
       dst.convertTo(src, CV_32FC3, 1.0 / 255);
       I.fromCvMat(src);
       detector.edgesDetect(I, E, O);
-      /*std::cerr << "edge box start:" << std::endl;
       Boxes boxes = edgeBoxes.generate(E, O);
-      std::cerr << "edge box finish:" << std::endl;*/
     }
     clock_t ed = clock();
     double total = double(ed - st) / CLOCKS_PER_SEC;

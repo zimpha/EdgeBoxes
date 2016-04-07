@@ -52,8 +52,8 @@ void CellArray::crop(int r1, int r2, int c1, int c2) {
   for (int k = 0; k < channels; ++k) {
     float *v = u + k * cols * rows;
     for (int c = 0; c < cols; ++c) {
-      float *w = v + c * rows;
-      memcpy(w, data + k * tc * tr + (c1 + c) * tr + r1, sizeof(float) * rows);
+      memcpy(v, data + k * tc * tr + (c1 + c) * tr + r1, sizeof(float) * rows);
+      v += rows;
     }
   }
   wrFree(data);

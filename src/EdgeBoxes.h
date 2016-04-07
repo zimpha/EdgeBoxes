@@ -12,8 +12,8 @@
 template <class T>
 class Array {
 public:
-  Array(): h(0), w(0), data(NULL), isFree(1) {}
-  Array(int _h, int _w): h(_h), w(_w), data(new T[h * w]()), isFree(0) {}
+  Array(): h(0), w(0), data(NULL), isFree(true) {}
+  Array(int _h, int _w): h(_h), w(_w), data(new T[h * w]()), isFree(false) {}
   void init(int _h, int _w) {
     if (!isFree && h * w == _h * _w) {
       h = _h, w = _w;
@@ -31,7 +31,7 @@ public:
     h = _h;
     w = _w;
     data = _data;
-    isFree = true;
+    isFree = false;
   }
   T& at(size_t c, size_t r) {
     return data[c * h + r];
@@ -42,7 +42,7 @@ public:
     }
     h = w = 0;
     data = NULL;
-    isFree = 1;
+    isFree = true;
   }
 
   int h, w;
@@ -110,15 +110,15 @@ private:
   arrayi _sDone, _sMap, _sIds;
   int _sId;
 
-  void generate(Boxes &boxes, arrayf &E, arrayf &O, arrayf &V);
+  void generate(Boxes &boxes, CellArray &E, CellArray &O, arrayf &V);
 
   // helper routines
-  void clusterEdges(arrayf &E, arrayf &O, arrayf &V);
-  void prepDataStructs(arrayf &E);
+  void clusterEdges(CellArray &E, CellArray &O, arrayf &V);
+  void prepDataStructs(CellArray &E);
   void scoreAllBoxes(Boxes &boxes);
   void scoreBox(Box &box);
   void refineBox(Box &box);
-  void drawBox(Box &box, arrayf &E, arrayf &V);
+  void drawBox(Box &box, CellArray &E, arrayf &V);
 };
 
 #endif

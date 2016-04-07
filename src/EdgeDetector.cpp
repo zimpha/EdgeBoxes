@@ -129,11 +129,10 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
 
   // get feature
   CellArray chnsReg, chnsSim;
-  clock_t st = clock();
   featureExtract(I, chnsReg, chnsSim);
   if (sharpen) {
     CellArray tmp;
-    convTri(tmp, I, 1.0f);
+    convTri(I, tmp, 1.0f);
     I.swap(tmp);
   }
 
@@ -336,7 +335,7 @@ void EdgeDetector::edgeNms(CellArray &E, CellArray &O, int r, int s, float m, in
   #pragma omp parallel for num_threads(nThreads)
   #endif
   for (int x = 0; x < w; ++x) for (int y = 0; y < h; ++y) {
-    float e = E.at(y,x); if (!e) continue;
+    float e = E.at(y,x); if (!e) continue; e *= m;
     float coso = cos(O.at(y,x)), sino = sin(O.at(y,x));
     for (int d = -r; d <= r; ++d) if (d) {
       float e0 = interp(E0.data, h, w, x + d * coso, y + d * sino);

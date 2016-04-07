@@ -39,34 +39,27 @@ void EdgeBoxes::initialize(float alpha, float beta, float eta, float minScore, i
 }
 
 Boxes EdgeBoxes::generate(CellArray &E, CellArray &O) {
-  int h = E.rows, w = E.cols;
-  arrayf edge, orient;
-  edge.init(h, w, (float*)E.data);
-  orient.init(h, w, (float*)O.data);
-  // TODO: optionally create memory for visualization
+  this->h = E.rows; this->w = E.cols;
   arrayf V;
-
   Boxes boxes;
-  generate(boxes, edge, orient, V);
+  generate(boxes, E, O, V);
   return boxes;
 }
 
-void EdgeBoxes::generate(Boxes &boxes, arrayf &E, arrayf &O, arrayf &V) {
+void EdgeBoxes::generate(Boxes &boxes, CellArray &E, CellArray &O, arrayf &V) {
   clusterEdges(E, O, V);
   prepDataStructs(E);
   scoreAllBoxes(boxes);
 }
 
-void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
+void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
   int i, j, c, r, cd, rd;
-  this->h = E.h;
-  this->w = E.w;
 
   // greedily merge connected edge pixels into clusters (create _segIds)
   _segIds.init(h, w); _segCnt = 1;
   for (c = 0; c < w; ++c) for (r = 0; r < h; ++r) {
     _segIds.at(c, r) = -(c == 0 || c == w - 1 || r == 0 || r == h - 1 ||
-                       E.at(c, r) <= _edgeMinMag);
+                       E.at(r, c) <= _edgeMinMag);
   }
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
     if (_segIds.at(c, r)) continue;
@@ -76,7 +69,7 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
     vectori cs, rs;
     for (float sumv = 0; sumv < _edgeMergeThr; ) {
       _segIds.at(c0, r0) = _segCnt;
-      float o0 = O.at(c0, r0), o1, v;
+      float o0 = O.at(r0, c0), o1, v;
       bool found = false;
       for (cd = -1; cd <= 1; ++cd) for (rd = -1; rd <= 1; ++rd) {
         if (_segIds.at(c0 + cd, r0 + rd)) continue;
@@ -89,7 +82,7 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
           }
         }
         if (found) continue;
-        o1 = O.at(c0 + cd, r0 + rd);
+        o1 = O.at(r0 + rd, c0 + cd);
         v = fabs(o1 - o0) / PI;
         if (v > .5) v = 1 - v;
         vs.push_back(v);
@@ -111,11 +104,11 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
   // merge or remove small segments
   _segMag.assign(_segCnt, 0);
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) > 0) _segMag[j] += E.at(c, r);
+    if ((j = _segIds.at(c, r)) > 0) _segMag[j] += E.at(r, c);
   }
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
     if ((j = _segIds.at(c, r)) > 0 && _segMag[j] <= _clusterMinMag) {
-      _segIds.at(r, c) = 0;
+      _segIds.at(c, r) = 0;
     }
   }
   // TODO: optimize using invert search or queue
@@ -123,11 +116,11 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
     i = 0;
     for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
       if (_segIds.at(c, r)) continue;
-      float o0 = O.at(c, r), o1, v, minv = 1000;
+      float o0 = O.at(r, c), o1, v, minv = 1000;
       j = 0;
       for (cd = -1; cd <= 1; ++cd) for (rd = -1; rd <= 1; ++rd) {
         if (_segIds.at(c + cd, r + rd) <= 0) continue;
-        o1 = O.at(c + cd, r + rd);
+        o1 = O.at(r + rd, c + cd);
         v = fabs(o1 - o0) / PI;
         if (v > .5) v = 1 - v;
         if (v < minv) {
@@ -146,7 +139,7 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
   _segCnt = 1;
   // TODO: update _segMag during above merge code
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) > 0) _segMag[j] += E.at(c, r);
+    if ((j = _segIds.at(c, r)) > 0) _segMag[j] += E.at(r, c);
   }
   for (i = 0; i < _segMag.size(); ++i) {
     if (_segMag[i] > 0) map[i] = _segCnt++;
@@ -161,7 +154,7 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
   vectorf meanOx(_segCnt, 0), meanOy(_segCnt, 0), meanO(_segCnt, 0);
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
     if ((j = _segIds.at(c, r)) <= 0) continue;
-    float m = E.at(c, r), o = O.at(c, r) * 2;
+    float m = E.at(r, c), o = O.at(r, c) * 2;
     _segMag[j] += m;
     meanOx[j] += m * cos(o);
     meanOy[j] += m * sin(o);
@@ -179,8 +172,8 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
   // TODO: store them together
   _segAff.resize(_segCnt);
   _segAffIdx.resize(_segCnt);
-  for (i = 0; i < _segCnt; ++i) _segAff[i].resize(0);
-  for (i = 0; i < _segCnt; ++i) _segAffIdx[i].resize(0);
+  for (i = 0; i < _segCnt; ++i) _segAff[i].clear();
+  for (i = 0; i < _segCnt; ++i) _segAffIdx[i].clear();
   const int rad = 2;
   for (c = rad; c < w - rad; ++c) for (r = rad; r < h - rad; ++r) {
     int s0 = _segIds.at(c, r); if (s0 <= 0) continue;
@@ -222,7 +215,7 @@ void EdgeBoxes::clusterEdges(arrayf &E, arrayf &O, arrayf &V) {
   }
 }
 
-void EdgeBoxes::prepDataStructs(arrayf &E) {
+void EdgeBoxes::prepDataStructs(CellArray &E) {
   int c, r, i;
 
   // create _segIImg
@@ -239,7 +232,7 @@ void EdgeBoxes::prepDataStructs(arrayf &E) {
   // create _magIImg
   _magIImg.init(h + 1, w + 1);
   for (c = 1; c < w; ++c) for (r = 1; r < h; ++r) {
-    float e = E.at(c, r) > _edgeMinMag ? E.at(c, r) : 0;
+    float e = E.at(r, c) > _edgeMinMag ? E.at(r, c) : 0;
     _magIImg.at(c + 1, r + 1) = e + _magIImg.at(c, r + 1) +
       _magIImg.at(c + 1, r) - _magIImg.at(c, r);
   }
@@ -312,6 +305,7 @@ void EdgeBoxes::scoreAllBoxes(Boxes &boxes) {
     ++k;
     refineBox(boxes[i]);
   }
+  std::cerr << k << std::endl;
   std::sort(boxes.rbegin(), boxes.rend());
   boxes.resize(k);
   boxesNms(boxes, _beta, _eta, _maxBoxes);
@@ -436,7 +430,7 @@ void EdgeBoxes::refineBox(Box &box) {
   }
 }
 
-void EdgeBoxes::drawBox(Box &box, arrayf &E, arrayf &V) {
+void EdgeBoxes::drawBox(Box &box, CellArray &E, arrayf &V) {
   if (V.data == NULL) return;
   int i, c, r;
   float e, o;
@@ -449,7 +443,7 @@ void EdgeBoxes::drawBox(Box &box, arrayf &E, arrayf &V) {
   for( c=0; c<w; c++ ) for( r=0; r<h; r++ )
     V.at(c+w*0,r)=V.at(c+w*1,r)=V.at(c+w*2,r)=1;
   for( c=0; c<w; c++ ) for( r=0; r<h; r++ ) {
-    i=_segIds.at(c,r); if(i<=0) continue; e = E.at(c,r);
+    i=_segIds.at(c,r); if(i<=0) continue; e = E.at(r,c);
     o = (_sDone.data[i]==sId) ? _sWts.data[_sMap.data[i]] :
       (_segC[i]>=c0 && _segC[i]<=c1 && _segR[i]>=r0 && _segR[i]<=r1 ) ? 0 : 1;
     V.at(c+w*0,r)=1-e+e*o; V.at(c+w*1,r)=1-e*o; V.at(c+w*2,r)=1-e;
