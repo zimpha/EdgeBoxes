@@ -2,7 +2,9 @@
 #include "EdgeDetector.h"
 #include "convUtil.h"
 #include "gradientUtil.h"
-#include "imageUtil.h"
+#include "imPad.h"
+#include "imResample.h"
+#include "rgbConvert.h"
 #include "wrappers.h"
 #include <string>
 
@@ -89,13 +91,14 @@ void EdgeDetector::loadModel(const std::string &path) {
   sharpen = std::min(sharpen, nBnds - 1);
 }
 
-void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &chnsSim) {
-  if (I.channels != 3) {
+void EdgeDetector::featureExtract(uint8_t* I, int h, int w, int d, CellArray &chnsReg, CellArray &chnsSim) {
+  if (d != 3) {
     wrError("input image must have 3 channels");
   }
   CellArray luv, M, O, H, I1, I2;
   std::vector<CellArray> chns(nChns);
-  rgbConvert(I, luv);
+  luv.rows = h, luv.cols = w, luv.channels = d;
+  luv.data = rgbConvert(I, h, w, d, (int)CS_LUV);
   imResample(luv, chns[0], cv::Size(0, 0), 1.0 / shrink, 1.0 / shrink);
   int k = 1;
   for (int i = 1, s = 1; i <= 2; ++i, s <<= 1) {
@@ -117,25 +120,7 @@ void EdgeDetector::featureExtract(CellArray &I, CellArray &chnsReg, CellArray &c
   convTri(tmp, chnsSim, simSm);
 }
 
-void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
-  // store original size of image
-  int oRows = I.rows, oCols = I.cols;
-  // pad image, making divisible by 4
-  int r = imWidth / 2;
-  std::vector<int> p = {r, r, r, r};
-  p[1] += (4 - (I.rows + r * 2) % 4) % 4;
-  p[3] += (4 - (I.cols + r * 2) % 4) % 4;
-  I = imPad(I, p, "symmetric");
-
-  // get feature
-  CellArray chnsReg, chnsSim;
-  featureExtract(I, chnsReg, chnsSim);
-  if (sharpen) {
-    CellArray tmp;
-    convTri(I, tmp, 1.0f);
-    I.swap(tmp);
-  }
-
+void EdgeDetector::detect(CellArray &I, CellArray &E, CellArray &O, CellArray &chnsReg, CellArray &chnsSim, int oRows, int oCols) {
   const int h = I.rows, w = I.cols, Z = I.channels;
   const int h1 = (int)ceil(double(h - imWidth) / stride);
   const int w1 = (int)ceil(double(w - imWidth) / stride);
@@ -274,7 +259,7 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
 
   // normalize and finalize edge maps
   float t = 1.0f * stride * stride / (gtWidth * gtWidth) / nTreesEval;
-  r = gtWidth / 2;
+  int r = gtWidth / 2;
 
   if (sharpen == 0) t *= 2;
   else if (sharpen == 1) t *= 1.8;
@@ -300,7 +285,31 @@ void EdgeDetector::edgesDetect(CellArray &I, CellArray &E, CellArray &O) {
       O.at(i, j) = val;
     }
   }
+}
 
+void EdgeDetector::edgesDetect(uint8_t* image, int h, int w, int d, CellArray &E, CellArray &O) {
+  // store original size of image
+  int oRows = h, oCols = w;
+  // pad image, making divisible by 4
+  int r = imWidth / 2;
+  std::vector<int> p = {r, r, r, r};
+  p[1] += (4 - (h + r * 2) % 4) % 4;
+  p[3] += (4 - (w + r * 2) % 4) % 4;
+  image = imPad(image, h, w, d, p, "symmetric");
+  h += p[0] + p[1];
+  w += p[2] + p[3];
+
+  // get feature
+  CellArray chnsReg, chnsSim;
+  featureExtract(image, h, w, d, chnsReg, chnsSim);
+  CellArray I; I.rows = h, I.cols = w, I.channels = d;
+  I.data = rgbConvert(image, h, w, d, (int)CS_RGB);
+  if (sharpen) {
+    CellArray tmp;
+    convTri(I, tmp, 1.0f);
+    I.swap(tmp);
+  }
+  detect(I, E, O, chnsReg, chnsSim, oRows, oCols);
   // perform nms
   edgeNms(E, O, 2, 0, 1, nThreads);
 }

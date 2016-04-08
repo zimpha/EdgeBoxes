@@ -26,14 +26,10 @@ public:
       isFree = false;
     }
   }
-  void init(int _h, int _w, T *_data) {
-    clear();
-    h = _h;
-    w = _w;
-    data = _data;
-    isFree = false;
-  }
   T& at(size_t c, size_t r) {
+    return data[c * h + r];
+  }
+  const T& at(size_t c, size_t r) const {
     return data[c * h + r];
   }
   void clear() {
@@ -54,6 +50,7 @@ typedef std::vector<float> vectorf;
 typedef std::vector<int> vectori;
 typedef Array<float> arrayf;
 typedef Array<int> arrayi;
+typedef Array<bool> arrayb;
 
 struct Box {
   int r, c, h, w;

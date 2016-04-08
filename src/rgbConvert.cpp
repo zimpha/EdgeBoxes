@@ -1,5 +1,4 @@
-#include "imageUtil.h"
-#include "rgbConvertMex.h"
+#include "rgbConvert.h"
 #include <cstdlib>
 #include <cmath>
 #include <typeinfo>
@@ -58,19 +57,4 @@ CellArray rgbConvert(CellArray& input, const int colorSpace) {
   CellArray output;
   rgbConvert(input, output, colorSpace);
   return output;
-}
-
-float* rgbConvert(float* image, int h, int w, int d, int colorSpace) {
-  int flag = colorSpace; if (flag == 4) flag = 1;
-  bool norm = (d == 1 && flag == 0) || flag == 1;
-
-  float *J;
-  if (norm) {
-    J = (float*)wrCalloc(h * w * d, sizeof(float));
-    int len = h * w * d;
-    memcpy(J, image, sizeof(float) * len);
-  } else {
-    J = rgbConvert(image, h * w, d, colorSpace, 1.0f);
-  }
-  return J;
 }

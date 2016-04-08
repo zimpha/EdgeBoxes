@@ -1,5 +1,4 @@
-#include "imageUtil.h"
-#include "imResampleMex.h"
+#include "imResample.h"
 #include <cstring>
 #include <cmath>
 #include <typeinfo>

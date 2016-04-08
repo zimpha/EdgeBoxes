@@ -24,7 +24,7 @@ public:
    * @param chnsReg [h x w x nChannel] regular output channels
    * @param chnsSim [h x w x nChannel] self-similarity output channels
    */
-  void featureExtract(CellArray &I, CellArray &chnsReg, CellArray &chnsSim);
+  void featureExtract(uint8_t *I, int h, int w, int d, CellArray &chnsReg, CellArray &chnsSim);
 
   /**
   * Detect edges in image.
@@ -33,7 +33,7 @@ public:
   * @param E    [h x w] edge probability map
   * @param O    [h x w] coarse edge normal orientation (0=left, pi/2=up)
   */
-  void edgesDetect(CellArray &I, CellArray &E, CellArray &O);
+  void edgesDetect(uint8_t *I, int h, int w, int d, CellArray &E, CellArray &O);
 
 private:
   // (1) model parameters
@@ -83,6 +83,7 @@ private:
   void buildLookupSs(uint32_t *&cids1, uint32_t *&cids2, int *dims, int w, int m);
 
   void edgeNms(CellArray &E, CellArray &O, int r, int s, float m, int nThreads);
+  void detect(CellArray &I, CellArray &E, CellArray &O, CellArray &chnsReg, CellArray &chnsSim, int oRows, int oCols);
 };
 
 #endif

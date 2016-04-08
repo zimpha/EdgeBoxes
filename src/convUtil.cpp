@@ -13,7 +13,7 @@ void convTri(CellArray& input, CellArray& output, float r, int s) {
   output.create(h / s, w / s, d);
   if (r > 0 && r <= 1 && s <= 2) {
     float rnew = 12 / r / (r + 2) - 2;
-    convTri(input.data, output.data, h, w, d, rnew, s);
+    convTri1(input.data, output.data, h, w, d, rnew, s);
   } else {
     convTri(input.data, output.data, h, w, d, round(r), s);
   }

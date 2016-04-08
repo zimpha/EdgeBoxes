@@ -305,7 +305,6 @@ void EdgeBoxes::scoreAllBoxes(Boxes &boxes) {
     ++k;
     refineBox(boxes[i]);
   }
-  std::cerr << k << std::endl;
   std::sort(boxes.rbegin(), boxes.rend());
   boxes.resize(k);
   boxesNms(boxes, _beta, _eta, _maxBoxes);
