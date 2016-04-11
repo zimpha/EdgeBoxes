@@ -61,6 +61,9 @@ void CellArray::crop(int r1, int r2, int c1, int c2) {
 }
 
 void CellArray::swap(CellArray &ca) {
+  std::swap(rows, ca.rows);
+  std::swap(cols, ca.cols);
+  std::swap(channels, ca.channels);
   std::swap(data, ca.data);
 }
 
@@ -91,7 +94,8 @@ CellArray& CellArray::operator=(const CellArray& ca) {
   rows = ca.rows;
   cols = ca.cols;
   channels = ca.channels;
-  memcpy(data, ca.data, sizeof(float) * total());
+  if (ca.data == NULL) data = NULL;
+  else memcpy(data, ca.data, sizeof(float) * total());
   return *this;
 }
 

@@ -1,18 +1,19 @@
 #include "gradientUtil.h"
 #include "wrappers.h"
 #include "CellArray.h"
-#include "EdgeDetector.h"
-#include "EdgeBoxes.h"
+//#include "EdgeDetector.h"
+//#include "EdgeBoxes.h"
+#include "chnsPyramid.h"
 
 #include <opencv2/opencv.hpp>
 
 int main() {
   try {
     CellArray I, E, O;
-    EdgeDetector detector;
-    EdgeBoxes edgeBoxes;
-    detector.loadModel("./model/model.bin");
-    edgeBoxes.initialize(.65, .75, 1, .01, 1e4, .1, .5, .5, 3, 1000, 2, 1.5);
+    //EdgeDetector detector;
+    //EdgeBoxes edgeBoxes;
+    //detector.loadModel("./model/model.bin");
+    //edgeBoxes.initialize(.65, .75, 1, .01, 1e4, .1, .5, .5, 3, 1000, 2, 1.5);
 
     std::vector<cv::String> filenames;
     cv::String folder = "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test";
@@ -31,14 +32,18 @@ int main() {
           }
         }
       }
-      clock_t a = clock();
+      PyramidInput pyramidInput;
+      PyramidOutput pyramidOutput;
+      chnsPyramid(I, h, w, d, pyramidInput, pyramidOutput);
+      wrFree(I);
+      /*clock_t a = clock();
       detector.edgesDetect(I, h, w, d, E, O);
       clock_t b = clock();
       Boxes boxes = edgeBoxes.generate(E, O);
       clock_t c = clock();
       std::cerr << "edge detect: " << double(b - a) / CLOCKS_PER_SEC << std::endl;
       std::cerr << "edge boxes: " << double(c - b) / CLOCKS_PER_SEC << std::endl;
-      std::cerr << "number of boxes: " << boxes.size() << std::endl;
+      std::cerr << "number of boxes: " << boxes.size() << std::endl;*/
     }
     clock_t ed = clock();
     double total = double(ed - st) / CLOCKS_PER_SEC;

@@ -2,6 +2,7 @@
 #define _EDGE_BOXES_H
 
 #include "CellArray.h"
+#include "global.h"
 #include <cstdlib>
 #include <cstring>
 #include <vector>
@@ -51,27 +52,6 @@ typedef std::vector<int> vectori;
 typedef Array<float> arrayf;
 typedef Array<int> arrayi;
 typedef Array<bool> arrayb;
-
-struct Box {
-  int r, c, h, w;
-  float s;
-  Box() {}
-  Box(int _r, int _c, int _h, int _w, float _s = 0.f): r(_r), c(_c), h(_h), w(_w), s(_s) {}
-  bool operator < (const Box &rhs) const {
-    return s < rhs.s;
-  }
-  float overlap(const Box &rhs) const {
-    if (h <= 0 || w <= 0) return 0;
-    if (h >= rhs.r + rhs.h || w >= rhs.c + rhs.w) return 0;
-    int r0 = std::max(r, rhs.r), r1 = std::min(r + h, rhs.r + rhs.h);
-    int c0 = std::max(c, rhs.c), c1 = std::min(c + w, rhs.c + rhs.w);
-    float areai = w * h, areaj = rhs.w * rhs.h;
-    float areaij = std::max(0, r1 - r0) * std::max(0, c1 - c0);
-    return areaij / (areai + areaj - areaij);
-  }
-};
-
-typedef std::vector<Box> Boxes;
 
 class EdgeBoxes {
 public:

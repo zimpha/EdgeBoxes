@@ -19,3 +19,8 @@ set(EDGE_LIB_SRC ${GRAD_LIB_SRC} ${IMAGE_LIB_SRC} ${CONV_LIB_SRC} EdgeDetector.c
 add_library(edge STATIC ${EDGE_LIB_SRC})
 target_link_libraries(edge ${OpenCV_LIBS})
 set_target_properties(edge PROPERTIES VERSION 1.0.0 SOVERSION 1)
+
+set(CHANNEL_LIB_SRC ${GRAD_LIB_SRC} ${IMAGE_LIB_SRC} ${CONV_LIB_SRC} chnsCompute.cpp  chnsPyramid.cpp)
+add_library(channel STATIC ${CHANNEL_LIB_SRC})
+target_link_libraries(channel ${OpenCV_LIBS})
+set_target_properties(channel PROPERTIES VERSION 1.0.0 SOVERSION 1)

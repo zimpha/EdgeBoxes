@@ -19,4 +19,4 @@ add_executable(image_demo demo/image_demo.cpp)
 target_link_libraries(image_demo ${OpenCV_LIBS} grad image conv)
 
 add_executable(detect_demo demo/detect_demo.cpp)
-target_link_libraries(detect_demo ${OpenCV_LIBS} grad image conv edge)
+target_link_libraries(detect_demo ${OpenCV_LIBS} grad image conv edge channel)
