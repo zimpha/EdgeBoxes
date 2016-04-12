@@ -3,7 +3,7 @@
 #include "CellArray.h"
 //#include "EdgeDetector.h"
 //#include "EdgeBoxes.h"
-#include "chnsPyramid.h"
+#include "ACFDetector.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -14,14 +14,17 @@ int main() {
     //EdgeBoxes edgeBoxes;
     //detector.loadModel("./model/model.bin");
     //edgeBoxes.initialize(.65, .75, 1, .01, 1e4, .1, .5, .5, 3, 1000, 2, 1.5);
+    ACFDetector acfDetector;
+    acfDetector.loadModel("./model/acfmodel.bin");
 
     std::vector<cv::String> filenames;
     cv::String folder = "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test";
     cv::glob(folder, filenames);
     clock_t st = clock();
-    for (size_t i = 0; i < filenames.size(); ++i) {
-      cv::Mat src = cv::imread(filenames[i]), dst;
-      std::cerr << filenames[i] << std::endl;
+    std::string ff = "/home/zimpha/EdgeBoxes/image/test.jpg";
+    for (size_t i = 0; i < 1; ++i) {
+      cv::Mat src = cv::imread(ff), dst;
+      std::cerr << ff << std::endl;
       cv::cvtColor(src, dst, CV_BGR2RGB);
       int h = dst.rows, w = dst.cols, d = 3;
       uint8_t* I = (uint8_t*)wrCalloc(h * w * d, sizeof(uint8_t));
@@ -32,10 +35,14 @@ int main() {
           }
         }
       }
-      PyramidInput pyramidInput;
+      Boxes res = acfDetector.acfDetect(I, h, w, d);
+      printf("%d\n", (int)res.size());
+      for (size_t i = 0; i < res.size(); ++i) {
+        printf("%d %d %d %d %.4f\n", res[i].c + 1, res[i].r + 1, res[i].w, res[i].h, res[i].s);
+      }
+      /*PyramidInput pyramidInput;
       PyramidOutput pyramidOutput;
-      chnsPyramid(I, h, w, d, pyramidInput, pyramidOutput);
-      wrFree(I);
+      chnsPyramid(I, h, w, d, pyramidInput, pyramidOutput);*/
       /*clock_t a = clock();
       detector.edgesDetect(I, h, w, d, E, O);
       clock_t b = clock();
@@ -44,6 +51,7 @@ int main() {
       std::cerr << "edge detect: " << double(b - a) / CLOCKS_PER_SEC << std::endl;
       std::cerr << "edge boxes: " << double(c - b) / CLOCKS_PER_SEC << std::endl;
       std::cerr << "number of boxes: " << boxes.size() << std::endl;*/
+      wrFree(I);
     }
     clock_t ed = clock();
     double total = double(ed - st) / CLOCKS_PER_SEC;

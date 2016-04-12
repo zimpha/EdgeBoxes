@@ -22,13 +22,10 @@ struct PyramidInput {
     pad[0] = pad[1] = 0;
     pad[0] = int(round(1.0 * pad[0] / chnsInput.shrink)) * chnsInput.shrink;
     pad[0] = int(round(1.0 * pad[1] / chnsInput.shrink)) * chnsInput.shrink;
-    pad[0] = 8; pad[1] = 6;
     minDs[0] = minDs[1] = 16;
     minDs[0] = std::min(minDs[0], chnsInput.shrink * 4.f);
     minDs[1] = std::min(minDs[1], chnsInput.shrink * 4.f);
-    minDs[0] = 50; minDs[1] = 20.500;
     complete = true;
-    lambdas = {0.f, .1105f, .1083f};
   }
 };
 

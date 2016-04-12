@@ -38,10 +38,9 @@ struct ChnsInput {
   // TODO: add custom channels
   bool complete;     // [] if true does not check/set default vals in pChns
   ChnsInput(): shrink(4), complete(true) {
-    shrink = 2;
-    pColor = (ColorParam){true, 0.f, CS_LUV};
+    pColor = (ColorParam){true, 1.f, CS_LUV};
     pGradMag = (GradMagParam){true, 0, 5.f, .005f, false};
-    pGradHist = (GradHistParam){true, shrink, 6, true, false, .2f};
+    pGradHist = (GradHistParam){true, shrink, 6, false, false, .2f};
   }
 };
 

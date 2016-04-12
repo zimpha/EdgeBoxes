@@ -5,15 +5,15 @@
 #include <algorithm>
 
 struct Point {
-  float r, c;
+  int r, c;
 };
 
 struct Box {
-  int r, c, h, w;
+  int c, r, w, h;
   float s;
   int bbType; // optional
   Box() {}
-  Box(int _r, int _c, int _h, int _w, float _s = 0.f): r(_r), c(_c), h(_h), w(_w), s(_s) {}
+  Box(int _c, int _r, int _w, int _h, float _s = 0.f): c(_c), r(_r), w(_w), h(_h), s(_s) {}
   bool operator < (const Box &rhs) const {
     return s < rhs.s;
   }
@@ -91,7 +91,7 @@ Boxes bb_union(Boxes &bb1, Boxes &bb2);
  * @param  ar [0] target aspect ratio (used only if hr=0 or wr=0)
  * @return    [nx4] the output resized bbs
  */
-Bixes bb_resize(Boxes &bb, float hr, float wr, float ar);
+Boxes bb_resize(Boxes &bb, float hr, float wr, float ar);
 
 /**
  * Fix bb aspect ratios (without moving the bb centers).

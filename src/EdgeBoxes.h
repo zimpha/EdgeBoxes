@@ -3,6 +3,7 @@
 
 #include "CellArray.h"
 #include "global.h"
+#include "box.h"
 #include <cstdlib>
 #include <cstring>
 #include <vector>

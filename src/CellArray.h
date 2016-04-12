@@ -31,6 +31,7 @@ public:
   int total() const;
 
   //! access matrix elements, i0-th row, i1-th col, i2-th channel
+  float* chn(int i = 0);
   float& at(int i0 = 0, int i1 = 0, int i2 = 0);
   const float& at(int i0 = 0, int i1 = 0, int i2 = 0) const;
   void multiply(float k);
@@ -48,6 +49,10 @@ private:
 
 inline int CellArray::total() const {
   return rows * cols * channels;
+}
+
+inline float* CellArray::chn(int i) {
+  return data + i * rows * cols;
 }
 
 inline float& CellArray::at(int i0, int i1, int i2) {

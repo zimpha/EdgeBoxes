@@ -1,8 +1,10 @@
 #ifndef _BB_NMS_H
 #define _BB_NMS_H
 
+#include "box.h"
 #include <limits>
 #include <vector>
+#include <string>
 
 struct NmsParam {
   std::string type;           // ['max'] 'max', 'maxg', 'ms', 'cover', or 'none'
@@ -15,10 +17,10 @@ struct NmsParam {
   bool separate;              // [0] run nms separately on each bb type (bbType)
 
   NmsParam():type("max"), overlap(.5f), ovrDnm("union"), resize(), separate(false) {
-    thr = std::numeric_limits<float>::max();
+    thr = std::numeric_limits<float>::min();
     maxn = std::numeric_limits<int>::max();
     radii[0] = radii[1] = .15f;
-    radii[2] = radii[2] = 1.f;
+    radii[2] = radii[3] = 1.f;
   }
 };
 
