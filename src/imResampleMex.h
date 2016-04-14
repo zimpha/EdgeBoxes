@@ -50,6 +50,7 @@ void resample( T *A, T *B, int ha, int hb, int wa, int wb, int d, T r ) {
   int hn, wn, x, x1, y, z, xa, xb, ya; T *A0, *A1, *A2, *A3, *B0, wt, wt1;
   T *C = (T*) alMalloc((ha+4)*sizeof(T),16); for(y=ha; y<ha+4; y++) C[y]=0;
   bool sse = (typeid(T)==typeid(float)) && !(size_t(A)&15) && !(size_t(B)&15);
+  sse=false;
   // get coefficients for resampling along w and h
   int *xas, *xbs, *yas, *ybs; T *xwts, *ywts; int xbd[2], ybd[2];
   resampleCoef<T>( wa, wb, wn, xas, xbs, xwts, xbd, 0 );

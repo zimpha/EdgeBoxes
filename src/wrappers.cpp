@@ -43,7 +43,9 @@ void wrFree(void* ptr) {
 
 // platform independent aligned memory allocation (see also alFree)
 void* alMalloc(size_t size, int alignment) {
-  return memalign(alignment, size);
+  void* align = memalign(alignment, size);
+  memset(align, 0, size);
+  return align;
 }
 
 // platform independent alignned memory de-allocation (see also alMalloc)

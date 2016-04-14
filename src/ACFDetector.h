@@ -49,11 +49,11 @@ private:
   };
   Forest clf;
 
-  void getChild(float* chns, uint32_t *cids, uint32_t *fids, float *thrs, uint32_t offset, uint32_t &k0, uint32_t &k);
+  void getChild(const float* chns, const uint32_t *cids, const uint32_t *fids, const float *thrs, uint32_t offset, uint32_t &k0, uint32_t &k);
   Boxes detect(CellArray &chns_data, int shrink, int modelHt, int modelWd, int stride, float cascThr);
 };
 
-inline void ACFDetector::getChild(float* chns, uint32_t *cids, uint32_t *fids, float *thrs, uint32_t offset, uint32_t &k0, uint32_t &k) {
+inline void ACFDetector::getChild(const float* chns, const uint32_t *cids, const uint32_t *fids, const float *thrs, uint32_t offset, uint32_t &k0, uint32_t &k) {
   float ftr = chns[cids[fids[k]]];
   k = (ftr < thrs[k]) ? 1 : 2;
   k0 = k += k0 * 2; k += offset;

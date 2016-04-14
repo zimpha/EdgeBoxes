@@ -18,15 +18,14 @@ int main() {
     acfDetector.loadModel("./model/acfmodel.bin");
 
     std::vector<cv::String> filenames;
-    cv::String folder = "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test";
+    cv::String folder = "/home/ubuntu/EdgeBoxes/image/BSR/BSDS500/data/images/test";
     cv::glob(folder, filenames);
     clock_t st = clock();
-    std::string ff = "/home/zimpha/EdgeBoxes/image/test.jpg";
-    for (size_t i = 0; i <1/* filenames.size()*/; ++i) {
-      cv::Mat src = cv::imread(ff), dst;
-      std::cerr << ff << std::endl;
+    std::string ff = "/home/ubuntu/EdgeBoxes/image/test.jpg";
+    for (size_t i = 0; i < filenames.size(); ++i) {
+      cv::Mat src = cv::imread(filenames[i]), dst;
+      std::cerr << filenames[i] << " " << src.rows << " " << src.cols << std::endl;
       cv::cvtColor(src, dst, CV_BGR2RGB);
-//      cv::resize(dst, src, cv::Size(0,0), 0.5, 0.5);
       int h = dst.rows, w = dst.cols, d = 3;
       uint8_t* I = (uint8_t*)wrCalloc(h * w * d, sizeof(uint8_t));
       for (int k = 0; k < d; ++k) {
@@ -38,12 +37,9 @@ int main() {
       }
       Boxes res = acfDetector.acfDetect(I, h, w, d);
       printf("%d\n", (int)res.size());
-      for (size_t i = 0; i < res.size(); ++i) {
+      /*for (size_t i = 0; i < res.size(); ++i) {
         printf("%d %d %d %d %.4f\n", res[i].c + 1, res[i].r + 1, res[i].w, res[i].h, res[i].s);
-      }
-      /*PyramidInput pyramidInput;
-      PyramidOutput pyramidOutput;
-      chnsPyramid(I, h, w, d, pyramidInput, pyramidOutput);*/
+      }*/
       /*clock_t a = clock();
       detector.edgesDetect(I, h, w, d, E, O);
       clock_t b = clock();

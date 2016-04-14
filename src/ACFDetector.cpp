@@ -144,12 +144,12 @@ Boxes ACFDetector::acfDetect(uint8_t *I, int h, int w, int d) {
 
 Boxes ACFDetector::detect(CellArray &chns_data, int shrink, int modelHt, int modelWd, int stride, float cascThr) {
   // extract relevant fields from trees
-  float* chns = chns_data.data;
-  float *thrs = clf.thrs;
-  float *hs = clf.hs;
-  uint32_t *fids = clf.fids;
-  uint32_t *child = clf.child;
-  int treeDepth = clf.treeDepth;
+  const float* chns = chns_data.data;
+  const float *thrs = clf.thrs;
+  const float *hs = clf.hs;
+  const uint32_t *fids = clf.fids;
+  const uint32_t *child = clf.child;
+  const int treeDepth = clf.treeDepth;
 
   // get dimensions and constants
   const int height = chns_data.rows;
@@ -171,7 +171,8 @@ Boxes ACFDetector::detect(CellArray &chns_data, int shrink, int modelHt, int mod
   // apply classifier to each patch
   Boxes res;
   for (int c = 0; c < width1; ++c) for (int r = 0; r < height1; ++r) {
-    float h = 0, *chns1 = chns + (r * stride / shrink) + (c * stride / shrink) * height;
+    float h = 0;
+    const float *chns1 = chns + (r * stride / shrink) + (c * stride / shrink) * height;
     if (treeDepth == 1) { // specialized case for treeDepth==1
       for (int t = 0; t < nTrees; ++t) {
         uint32_t offset = t * nTreeNodes, k = offset, k0 = 0;
