@@ -22,10 +22,11 @@ int main() {
     cv::glob(folder, filenames);
     clock_t st = clock();
     std::string ff = "/home/zimpha/EdgeBoxes/image/test.jpg";
-    for (size_t i = 0; i < 1; ++i) {
+    for (size_t i = 0; i <1/* filenames.size()*/; ++i) {
       cv::Mat src = cv::imread(ff), dst;
       std::cerr << ff << std::endl;
       cv::cvtColor(src, dst, CV_BGR2RGB);
+//      cv::resize(dst, src, cv::Size(0,0), 0.5, 0.5);
       int h = dst.rows, w = dst.cols, d = 3;
       uint8_t* I = (uint8_t*)wrCalloc(h * w * d, sizeof(uint8_t));
       for (int k = 0; k < d; ++k) {

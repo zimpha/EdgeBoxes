@@ -13,7 +13,7 @@ CellArray::CellArray(const CellArray &ca) {
   rows = ca.rows;
   cols = ca.cols;
   channels = ca.channels;
-  data = (float*)wrCalloc(total(), sizeof(float));
+  data = (float*)alMalloc(total() * sizeof(float), 16);
   memcpy(data, ca.data, sizeof(float) * total());
 }
 
@@ -33,7 +33,7 @@ void CellArray::fromCvMat(const cv::Mat &m) {
   rows = m.rows;
   cols = m.cols;
   channels = m.channels();
-  data = (float*)wrCalloc(total(), sizeof(float));
+  data = (float*)alMalloc(total() * sizeof(float), 16);
   copyFromMatRawData((float*)m.data);
 }
 
@@ -48,7 +48,7 @@ void CellArray::crop(int r1, int r2, int c1, int c2) {
   int tr = rows, tc = cols;
   rows = r2 - r1;
   cols = c2 - c1;
-  float *u = (float*)wrCalloc(total(), sizeof(float));
+  float *u = (float*)alMalloc(total() * sizeof(float), 16);
   for (int k = 0; k < channels; ++k) {
     float *v = u + k * cols * rows;
     for (int c = 0; c < cols; ++c) {
@@ -79,7 +79,7 @@ void CellArray::create(int _rows, int _cols, int _channels) {
   rows = _rows;
   cols = _cols;
   channels = _channels;
-  data = (float*)wrCalloc(total(), sizeof(float));
+  data = (float*)alMalloc(total() * sizeof(float), 16);
 }
 
 CellArray::~CellArray() {
@@ -89,7 +89,7 @@ CellArray::~CellArray() {
 CellArray& CellArray::operator=(const CellArray& ca) {
   if (total() != ca.total()) {
     wrFree(data);
-    data = (float*)wrCalloc(ca.total(), sizeof(float));
+    data = (float*)alMalloc(ca.total() * sizeof(float), 16);
   }
   rows = ca.rows;
   cols = ca.cols;

@@ -52,7 +52,7 @@ T* imPad(T* I, int h, int w, int d, std::vector<int> &pad, const std::string &ty
   ms[0] = ns[0] + pt + pb; ms[1] = ns[1] + pl + pr; ms[2] = ns[2];
   if (ms[0] < 0 || ns[0] <= -pt || ns[0] <= -pb ) ms[0] = 0;
   if (ms[1] < 0 || ns[1] <= -pl || ns[1] <= -pr ) ms[1] = 0;
-  T *J = (T*)wrCalloc(ms[0] * ms[1] * ms[2], sizeof(T));
+  T *J = (T*)alMalloc(ms[0] * ms[1] * ms[2] * sizeof(T), 16);
 
   imPad(I, J, ns[0], ns[1], ns[2], pt, pb, pl, pr, flag, T(val));
   return J;

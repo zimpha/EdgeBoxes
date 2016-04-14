@@ -153,7 +153,7 @@ template<class iT, class oT> void normalize( iT *I, oT *J, int n, oT nrm ) {
 // Convert rgb to various colorspaces
 template<class iT, class oT>
 oT* rgbConvert( iT *I, int n, int d, int flag, oT nrm ) {
-  oT *J = (oT*) wrMalloc(n*(flag==0 ? (d==1?1:d/3) : d)*sizeof(oT));
+  oT *J = (oT*) alMalloc(n*(flag==0 ? (d==1?1:d/3) : d)*sizeof(oT), 16);
   int i, n1=d*(n<1000?n/10:100); oT thr = oT(1.001);
   if(flag>1 && nrm==1) for(i=0; i<n1; i++) if(I[i]>thr)
     wrError("For floats all values in I must be smaller than 1.");

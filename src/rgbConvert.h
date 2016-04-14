@@ -50,7 +50,7 @@ float* rgbConvert(T* image, int h, int w, int d, int colorSpace) {
   bool norm = (d == 1 && flag == 0) || flag == 1;
   float *J;
   if (norm) {
-    J = (float*)wrCalloc(h * w * d, sizeof(float));
+    J = (float*)alMalloc(h * w * d * sizeof(float), 16);
     int len = h * w * d;
     if (typeid(T) == typeid(float)) {
       memcpy(J, image, sizeof(float) * len);
