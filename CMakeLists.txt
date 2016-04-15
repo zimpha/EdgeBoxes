@@ -17,3 +17,6 @@ add_subdirectory(src)
 
 add_executable(detect_demo demo/detect_demo.cpp)
 target_link_libraries(detect_demo ${OpenCV_LIBS} grad image conv channel acf)
+
+add_executable(edge_demo demo/edge_demo.cpp)
+target_link_libraries(edge_demo ${OpenCV_LIBS} grad image conv edge)
