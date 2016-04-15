@@ -73,7 +73,7 @@ private:
   int _segCnt;                      // total segment count
   arrayi _segIds;                   // segment ids (-1/0 means no segment)
   vectorf _segMag;                  // segment edge magnitude sums
-  vectori _segR, _segC;             // segment lower-right pixel
+  std::vector<Point> _segP;         // segment lower-right pixel
   std::vector<vectorif> _segAff;    // segment neighbors and affinities
 
   // data structures for efficiency (see prepDataStructs)

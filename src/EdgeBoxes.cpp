@@ -48,7 +48,10 @@ Boxes EdgeBoxes::generate(CellArray &E, CellArray &O) {
 }
 
 void EdgeBoxes::generate(Boxes &boxes, CellArray &E, CellArray &O, arrayf &V) {
+  clock_t st = clock();
   clusterEdges(E, O, V);
+  clock_t ed = clock();
+  printf("time for cluster: %.6f\n", (double)(ed - st) / CLOCKS_PER_SEC);
   prepDataStructs(E);
   scoreAllBoxes(boxes);
 }
@@ -65,7 +68,7 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
   int i, j, c, r, cd, rd;
 
   // greedily merge connected edge pixels into clusters (create _segIds)
-  _segIds.init(h, w); _segCnt = 1;
+  _segIds.init(h, w); _segMag.assign(1, 0); _segCnt = 1;
   for (c = 0; c < w; ++c) for (r = 0; r < h; ++r) {
     _segIds.at(c, r) = -(c == 0 || c == w - 1 || r == 0 || r == h - 1 ||
                        E.at(r, c) <= _edgeMinMag);
@@ -73,11 +76,13 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
   arrayi vis(h, w); int vis_cnt = 0;
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
     if (_segIds.at(c, r)) continue;
-    int c0 = c, r0 = r, cc, rr; vis_cnt++;
+    int c0 = c, r0 = r, cc, rr;
     std::priority_queue<ClusterNode> vs;
+    float MagSum = 0; vis_cnt++;
     for (float sumv = 0; sumv < _edgeMergeThr; ) {
       _segIds.at(c0, r0) = _segCnt;
       float o0 = O.at(r0, c0), o1, v;
+      MagSum += E.at(r0, c0);
       for (cd = -1; cd <= 1; ++cd) for (rd = -1; rd <= 1; ++rd) {
         if (_segIds.at(cc = c0 + cd, rr = r0 + rd) || vis.at(cc, rr) == vis_cnt) continue;
         o1 = O.at(rr, cc);
@@ -92,14 +97,11 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
         sumv += vs.top().s; vs.pop();
       }
     }
-    ++_segCnt;
+    _segMag.push_back(MagSum); ++_segCnt;
   }
 
   // merge or remove small segments
-  _segMag.assign(_segCnt, 0);
-  for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) > 0) _segMag[j] += E.at(r, c);
-  }
+  // In practice, the number of large segments is small, maybe use heap to optimize
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
     if ((j = _segIds.at(c, r)) > 0 && _segMag[j] <= _clusterMinMag) {
       _segIds.at(c, r) = 0;
@@ -123,31 +125,30 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
         }
       }
       _segIds.at(c, r) = j;
-      if (j > 0) ++i;
+      if (j > 0) ++i, _segMag[j] += E.at(r, c);
     }
   }
 
   // compactify representation (remap _segIds)
-  _segMag.assign(_segCnt, 0);
-  vectori map(_segCnt, 0);
-  _segCnt = 1;
-  // TODO: update _segMag during above merge code
-  for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) > 0) _segMag[j] += E.at(r, c);
-  }
+  vectori map(_segCnt, 0); _segCnt = 1;
+  std::vector<Point> pitch;
   for (i = 0; i < _segMag.size(); ++i) {
-    if (_segMag[i] > 0) map[i] = _segCnt++;
+    if (_segMag[i] > _clusterMinMag) map[i] = _segCnt++;
   }
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) > 0) _segIds.at(c, r) = map[j];
+    if ((j = _segIds.at(c, r)) > 0) {
+      _segIds.at(c, r) = map[j];
+      pitch.push_back((Point){r, c});
+    }
   }
 
   // compute positional means and recompute _segMag
   _segMag.assign(_segCnt, 0);
   vectorf meanX(_segCnt, 0), meanY(_segCnt, 0);
   vectorf meanOx(_segCnt, 0), meanOy(_segCnt, 0), meanO(_segCnt, 0);
-  for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) <= 0) continue;
+  for (size_t i = 0; i < pitch.size(); ++i) {
+    int c = pitch[i].c, r = pitch[i].r;
+    int j = _segIds.at(c, r);
     float m = E.at(r, c), o = O.at(r, c) * 2;
     _segMag[j] += m;
     meanOx[j] += m * cos(o);
@@ -157,46 +158,40 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
   }
   for (i = 0; i < _segCnt; ++i) if (_segMag[i] > 0) {
     float m = _segMag[i];
-    meanX[i] /= m;
-    meanY[i] /= m;
+    meanX[i] /= m; meanY[i] /= m;
     meanO[i] = atan2(meanOy[i] / m, meanOx[i] / m) * 0.5;
   }
 
   // compute segment affinities
-  // TODO: store them together
   _segAff.resize(_segCnt);
-  //_segAffIdx.resize(_segCnt);
   for (i = 0; i < _segCnt; ++i) _segAff[i].clear();
-  // (i = 0; i < _segCnt; ++i) _segAffIdx[i].clear();
   const int rad = 2;
-  for (c = rad; c < w - rad; ++c) for (r = rad; r < h - rad; ++r) {
+  for (size_t i = 0; i < pitch.size(); ++i) {
+    int c = pitch[i].c, r = pitch[i].r;
+    if (c < rad || c >= w - rad || r < rad || r >= h - rad) continue;
     int s0 = _segIds.at(c, r); if (s0 <= 0) continue;
     for (cd = -rad; cd <= rad; ++cd) for (rd = -rad; rd <= rad; ++rd) {
       int s1 = _segIds.at(c + cd, r + rd); if (s1 <= s0) continue;
       bool found = false;
-      // TODO: resize after all done
-      for (i = 0; i < _segAff[s0].size(); ++i) {
-        if (_segAff[s0][i].first == s1) {
-          found = true;
-          break;
+      for (j = 0; j < _segAff[s0].size(); ++j) {
+        if (_segAff[s0][j].first == s1) {
+          found = true; break;
         }
       }
       if (found) continue;
       float o = atan2(meanY[s0] - meanY[s1], meanX[s0] - meanX[s1]) + PI / 2;
       float a = fabs(cos(meanO[s0] - o) * cos(meanO[s1] - o));
       a = pow(a, _gamma);
-      _segAff[s0].push_back(std::make_pair(s1, a));// _segAffIdx[s0].push_back(s1);
-      _segAff[s1].push_back(std::make_pair(s0, a));// _segAffIdx[s1].push_back(s0);
+      _segAff[s0].push_back(std::make_pair(s1, a));
+      _segAff[s1].push_back(std::make_pair(s0, a));
     }
   }
 
   // compute _segC and _segR
-  _segC.resize(_segCnt); _segR.resize(_segCnt);
-  for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
-    if ((j = _segIds.at(c, r)) > 0) {
-      _segC[j] = c;
-      _segR[j] = r;
-    }
+  _segP.resize(_segCnt);
+  for (size_t i = 0; i < pitch.size(); ++i) {
+    int c = pitch[i].c, r = pitch[i].r;
+    _segP[_segIds.at(c, r)] = pitch[i];
   }
 
   // optionally create visualization (assume memory initialized is 3*w*h)
@@ -215,7 +210,7 @@ void EdgeBoxes::prepDataStructs(CellArray &E) {
   // create _segIImg
   arrayf E1(h, w);
   for (i = 0; i < _segCnt; ++i) if (_segMag[i] > 0) {
-    E1.at(_segC[i], _segR[i]) = _segMag[i];
+    E1.at(_segP[i].c, _segP[i].r) = _segMag[i];
   }
   _segIImg.init(h + 1, w + 1);
   for (c = 1; c < w; ++c) for (r = 1; r < h; ++r) {
@@ -350,9 +345,7 @@ void EdgeBoxes::scoreBox(Box &box) {
   for (i = rs; i <= re; ++i) if ((j = _vIdxs[c1][i]) > 0 && sDone[j] != sId) {
     sIds[n] = j; sWts[n] = 1; sDone[j] = sId; sMap[j] = n++;
   }
-  //std::cerr << "start " << n << std::endl;
   // follow connected paths and set weights accordingly (w=1 means remove)
-  // looks like just a bfs
   for (i = 0; i < n; ++i) {
     float w = sWts[i];
     j = sIds[i];
@@ -365,7 +358,7 @@ void EdgeBoxes::scoreBox(Box &box) {
           sWts[sMap[q]] = wq;
           i = std::min(i, sMap[q] - 1);
         }
-      } else if (_segC[q] >= c0 && _segC[q] <= c1 && _segR[q] >= r0 && _segR[q] <= r1) {
+      } else if (_segP[q].c >= c0 && _segP[q].c <= c1 && _segP[q].r >= r0 && _segP[q].r <= r1) {
         sIds[n] = q; sWts[n] = wq; sDone[q] = sId; sMap[q] = n++;
       }
     }
@@ -373,7 +366,7 @@ void EdgeBoxes::scoreBox(Box &box) {
   // finally remove segments connected to boundaries
   for (i = 0; i < n; ++i) {
     k = sIds[i];
-    if (_segC[k] >= c0 && _segC[k] <= c1 && _segR[k] >= r0 && _segR[k] <= r1) {
+    if (_segP[k].c >= c0 && _segP[k].c <= c1 && _segP[k].r >= r0 && _segP[k].r <= r1) {
       score -= sWts[i] * _segMag[k];
     }
   }
@@ -438,7 +431,7 @@ void EdgeBoxes::drawBox(Box &box, CellArray &E, arrayf &V) {
   for( c=0; c<w; c++ ) for( r=0; r<h; r++ ) {
     i=_segIds.at(c,r); if(i<=0) continue; e = E.at(r,c);
     o = (_sDone.data[i]==sId) ? _sWts.data[_sMap.data[i]] :
-      (_segC[i]>=c0 && _segC[i]<=c1 && _segR[i]>=r0 && _segR[i]<=r1 ) ? 0 : 1;
+      (_segP[i].c>=c0 && _segP[i].c<=c1 && _segP[i].r>=r0 && _segP[i].r<=r1 ) ? 0 : 1;
     V.at(c+w*0,r)=1-e+e*o; V.at(c+w*1,r)=1-e*o; V.at(c+w*2,r)=1-e;
   }
   // finally draw bounding box
