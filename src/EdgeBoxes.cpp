@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <queue>
 
 template<typename T>
 T clamp(T val, T lo, T hi) {
@@ -52,6 +53,14 @@ void EdgeBoxes::generate(Boxes &boxes, CellArray &E, CellArray &O, arrayf &V) {
   scoreAllBoxes(boxes);
 }
 
+struct ClusterNode {
+    int c, r; float s;
+    bool operator < (const ClusterNode &rhs) const {
+      return s > rhs.s;
+    }
+
+};
+
 void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
   int i, j, c, r, cd, rd;
 
@@ -61,42 +70,27 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
     _segIds.at(c, r) = -(c == 0 || c == w - 1 || r == 0 || r == h - 1 ||
                        E.at(r, c) <= _edgeMinMag);
   }
+  arrayi vis(h, w); int vis_cnt = 0;
   for (c = 1; c < w - 1; ++c) for (r = 1; r < h - 1; ++r) {
     if (_segIds.at(c, r)) continue;
-    int c0 = c, r0 = r;
-    vectorf vs;
-    // TODO: cs and rs can store together, cache-friendly?
-    vectori cs, rs;
+    int c0 = c, r0 = r, cc, rr; vis_cnt++;
+    std::priority_queue<ClusterNode> vs;
     for (float sumv = 0; sumv < _edgeMergeThr; ) {
       _segIds.at(c0, r0) = _segCnt;
       float o0 = O.at(r0, c0), o1, v;
-      bool found = false;
       for (cd = -1; cd <= 1; ++cd) for (rd = -1; rd <= 1; ++rd) {
-        if (_segIds.at(c0 + cd, r0 + rd)) continue;
-        found = false;
-        // TODO: maybe can be optimized using a visited array
-        for (i = 0; i < cs.size(); ++i) {
-          if (cs[i] == c0 + cd && rs[i] == r0 + rd) {
-            found = true;
-            break;
-          }
-        }
-        if (found) continue;
-        o1 = O.at(r0 + rd, c0 + cd);
+        if (_segIds.at(cc = c0 + cd, rr = r0 + rd) || vis.at(cc, rr) == vis_cnt) continue;
+        o1 = O.at(rr, cc);
         v = fabs(o1 - o0) / PI;
         if (v > .5) v = 1 - v;
-        vs.push_back(v);
-        cs.push_back(c0 + cd);
-        rs.push_back(r0 + rd);
+        vs.push((ClusterNode){cc, rr, v});
+        vis.at(cc, rr) = vis_cnt;
       }
-      // TODO: maybe can use a heap
-      float minv = 1000;
-      j = 0;
-      for (i = 0; i < vs.size(); ++i) if (vs[i] < minv) {
-        minv = vs[i]; j = i; c0 = cs[j], r0 = rs[j];
+      if (vs.empty()) sumv += 1000;
+      else {
+        c0 = vs.top().c; r0 = vs.top().r;
+        sumv += vs.top().s; vs.pop();
       }
-      sumv += minv;
-      if (minv < 1000) vs[j] = 1000;
     }
     ++_segCnt;
   }
@@ -171,9 +165,9 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
   // compute segment affinities
   // TODO: store them together
   _segAff.resize(_segCnt);
-  _segAffIdx.resize(_segCnt);
+  //_segAffIdx.resize(_segCnt);
   for (i = 0; i < _segCnt; ++i) _segAff[i].clear();
-  for (i = 0; i < _segCnt; ++i) _segAffIdx[i].clear();
+  // (i = 0; i < _segCnt; ++i) _segAffIdx[i].clear();
   const int rad = 2;
   for (c = rad; c < w - rad; ++c) for (r = rad; r < h - rad; ++r) {
     int s0 = _segIds.at(c, r); if (s0 <= 0) continue;
@@ -181,8 +175,8 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
       int s1 = _segIds.at(c + cd, r + rd); if (s1 <= s0) continue;
       bool found = false;
       // TODO: resize after all done
-      for (i = 0; i < _segAffIdx[s0].size(); ++i) {
-        if (_segAffIdx[s0][i] == s1) {
+      for (i = 0; i < _segAff[s0].size(); ++i) {
+        if (_segAff[s0][i].first == s1) {
           found = true;
           break;
         }
@@ -191,8 +185,8 @@ void EdgeBoxes::clusterEdges(CellArray &E, CellArray &O, arrayf &V) {
       float o = atan2(meanY[s0] - meanY[s1], meanX[s0] - meanX[s1]) + PI / 2;
       float a = fabs(cos(meanO[s0] - o) * cos(meanO[s1] - o));
       a = pow(a, _gamma);
-      _segAff[s0].push_back(a); _segAffIdx[s0].push_back(s1);
-      _segAff[s1].push_back(a); _segAffIdx[s1].push_back(s0);
+      _segAff[s0].push_back(std::make_pair(s1, a));// _segAffIdx[s0].push_back(s1);
+      _segAff[s1].push_back(std::make_pair(s0, a));// _segAffIdx[s1].push_back(s0);
     }
   }
 
@@ -362,9 +356,9 @@ void EdgeBoxes::scoreBox(Box &box) {
   for (i = 0; i < n; ++i) {
     float w = sWts[i];
     j = sIds[i];
-    for (k = 0; k < int(_segAffIdx[j].size()); ++k) {
-      q = _segAffIdx[j][k];
-      float wq = w * _segAff[j][k];
+    for (k = 0; k < int(_segAff[j].size()); ++k) {
+      q = _segAff[j][k].first;
+      float wq = w * _segAff[j][k].second;
       if (wq < .05f) continue; // short circuit for efficiency
       if (sDone[q] == sId) {
         if (wq > sWts[sMap[q]]) {

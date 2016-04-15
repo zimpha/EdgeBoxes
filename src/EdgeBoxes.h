@@ -50,6 +50,7 @@ public:
 
 typedef std::vector<float> vectorf;
 typedef std::vector<int> vectori;
+typedef std::vector<std::pair<int, float>> vectorif;
 typedef Array<float> arrayf;
 typedef Array<int> arrayi;
 typedef Array<bool> arrayb;
@@ -73,8 +74,7 @@ private:
   arrayi _segIds;                   // segment ids (-1/0 means no segment)
   vectorf _segMag;                  // segment edge magnitude sums
   vectori _segR, _segC;             // segment lower-right pixel
-  std::vector<vectorf> _segAff;          // segment affinities
-  std::vector<vectori> _segAffIdx;       // segment neighbors
+  std::vector<vectorif> _segAff;    // segment neighbors and affinities
 
   // data structures for efficiency (see prepDataStructs)
   arrayf _segIImg, _magIImg;
