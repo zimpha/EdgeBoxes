@@ -37,10 +37,24 @@ void ACFDetector::loadModel(const std::string &filepath) {
   }
   // get pPyramid
   // TODO: WARNING!! hard code for chnsInput
-  pPyramid.chnsInput.shrink = 2;
-  pPyramid.chnsInput.pColor = (ColorParam){true, 0.f, CS_LUV};
-  pPyramid.chnsInput.pGradMag = (GradMagParam){true, 0, 5.f, .005f, false};
-  pPyramid.chnsInput.pGradHist = (GradHistParam){true, pPyramid.chnsInput.shrink, 6, true, false, .2f};
+  fread(&pPyramid.chnsInput.shrink, sizeof(int), 1, fp);
+  pPyramid.chnsInput.pColor.enabled = true;
+  fread(&pPyramid.chnsInput.pColor.smooth, sizeof(float), 1, fp);
+  pPyramid.chnsInput.pColor.colorSpace = CS_LUV;
+
+  pPyramid.chnsInput.pGradMag.enabled = true;
+  fread(&pPyramid.chnsInput.pGradMag.colorChannel, sizeof(int), 1, fp);
+  fread(&pPyramid.chnsInput.pGradMag.normRad, sizeof(float), 1, fp);
+  fread(&pPyramid.chnsInput.pGradMag.normConst, sizeof(float), 1, fp);
+  fread(&pPyramid.chnsInput.pGradMag.full, sizeof(bool), 1, fp);
+
+  pPyramid.chnsInput.pGradHist.enabled = true;
+  pPyramid.chnsInput.pGradHist.binSize = pPyramid.chnsInput.shrink;
+  fread(&pPyramid.chnsInput.pGradHist.nOrients, sizeof(int), 1, fp);
+  fread(&pPyramid.chnsInput.pGradHist.softBin, sizeof(bool), 1, fp);
+  fread(&pPyramid.chnsInput.pGradHist.useHog, sizeof(bool), 1, fp);
+  fread(&pPyramid.chnsInput.pGradHist.clipHog, sizeof(float), 1, fp);
+
   pPyramid.chnsInput.complete = true;
 
   fread(&pPyramid.nPerOct, sizeof(int), 1, fp);
