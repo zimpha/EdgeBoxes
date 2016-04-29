@@ -43,14 +43,16 @@ void rgbConvert(CellArray& input, CellArray& output, const int colorSpace) {
 
   // alloc output data
   int outputChannel = (flag == 0) ? (inputChannel == 1 ? 1 : inputChannel / 3) : inputChannel;
-  output.create(input.rows, input.cols, outputChannel);
 
   float* I = input.data;
-  float* O = output.data;
+  output.release();
+  output.rows = input.rows;
+  output.cols = input.cols;
+  output.channels = outputChannel;
   if (!((inputChannel == 1 && flag == 0) || flag == 1 || inputChannel % 3 == 0)) {
     wrError("Input image must have third dimension d==1 or (d/3)*3==d.");
   }
-  rgbConvert((float*)I, (float*)O, n, inputChannel, flag, 1.0f);
+  output.data = rgbConvert(I, n, inputChannel, flag, 1.0f);
 }
 
 CellArray rgbConvert(CellArray& input, const int colorSpace) {

@@ -1,6 +1,11 @@
 #ifndef _SSE_H
 #define _SSE_H
+
+#ifdef ARM_NEON
+#include "SSE2NEON.h"
+#else
 #include <emmintrin.h> // SSE2:<e*.h>, SSE3:<p*.h>, SSE4:<s*.h>
+#endif
 
 #define RETf inline __m128
 #define RETi inline __m128i

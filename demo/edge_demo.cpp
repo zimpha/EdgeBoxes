@@ -12,13 +12,13 @@ int main() {
     EdgeDetector detector;
     EdgeBoxes edgeBoxes;
     detector.loadModel("./model/model.bin");
-    edgeBoxes.initialize(.65, .75, 1, .01, 1e4, .1, .5, .5, 3, 1000, 2, 1.5);
+    edgeBoxes.initialize(.65, .75, 1, .01, 1000, .1, .5, .5, 3, 1000, 2, 1.5);
     std::vector<cv::String> filenames;
-    cv::String folder = "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test";
+    cv::String folder = "/home/zimpha/EdgeBoxes/image/BSR/BSDS500/data/images/test/";
     cv::glob(folder, filenames);
-    clock_t st = clock();
-    std::string ff = "/home/zimpha/EdgeBoxes/image/test.jpg";
-    for (size_t i = 0; i < filenames.size(); ++i) {
+    clock_t st = clock(), extra = 0;
+    for (size_t i = 0; i < 20;/*filenames.size();*/ ++i) {
+      clock_t est = clock();
       cv::Mat src = cv::imread(filenames[i]), dst;
       std::cerr << filenames[i] << std::endl;
       cv::cvtColor(src, dst, CV_BGR2RGB);
@@ -31,20 +31,22 @@ int main() {
           }
         }
       }
+      std::cerr << h << " " << w << " " << d << std::endl;
+      extra += clock() - est;
       clock_t a = clock();
       detector.edgesDetect(I, h, w, d, E, O);
       clock_t b = clock();
-      Boxes boxes = edgeBoxes.generate(E, O);
-      clock_t c = clock();
+      //Boxes boxes = edgeBoxes.generate(E, O);
+      //clock_t c = clock();
       std::cerr << "edge detect: " << double(b - a) / CLOCKS_PER_SEC << std::endl;
-      std::cerr << "edge boxes: " << double(c - b) / CLOCKS_PER_SEC << std::endl;
-      std::cerr << "number of boxes: " << boxes.size() << std::endl;
+      //std::cerr << "edge boxes: " << double(c - b) / CLOCKS_PER_SEC << std::endl;
+      //std::cerr << "number of boxes: " << boxes.size() << std::endl;
       wrFree(I);
     }
     clock_t ed = clock();
-    double total = double(ed - st) / CLOCKS_PER_SEC;
+    double total = double(ed - st - extra) / CLOCKS_PER_SEC;
     std::cerr << "total: " << total << std::endl;
-    std::cerr << "average: " << total / filenames.size() << std::endl;
+    std::cerr << "fps: " << 20 / total/*filenames.size()*/ << std::endl;
   } catch (const std::string &e) {
     std::cerr << e << std::endl;
   }

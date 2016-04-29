@@ -51,7 +51,7 @@ void EdgeBoxes::generate(Boxes &boxes, CellArray &E, CellArray &O, arrayf &V) {
   clock_t st = clock();
   clusterEdges(E, O, V);
   clock_t ed = clock();
-  printf("time for cluster: %.6f\n", (double)(ed - st) / CLOCKS_PER_SEC);
+  printf("%d time for cluster: %.6f\n", _segCnt, (double)(ed - st) / CLOCKS_PER_SEC);
   prepDataStructs(E);
   scoreAllBoxes(boxes);
 }

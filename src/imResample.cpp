@@ -11,6 +11,10 @@ void imResample(CellArray& input, CellArray& output, cv::Size dsize, double fx, 
     }
     dsize = cv::Size(round(fx * input.cols), round(fy * input.rows));
   }
+  if (dsize.height == input.rows && dsize.width == input.cols && norm == 1) {
+    output = input;
+    return;
+  }
 
   if (useBilinear) {
     output.create(dsize.height, dsize.width, input.channels);
@@ -22,7 +26,7 @@ void imResample(CellArray& input, CellArray& output, cv::Size dsize, double fx, 
     }
     float *A = input.data;
     float *B = output.data;
-    resample((float*)A, (float*)B, ns[0], ms[0], ns[1], ms[1], nChannels, (float)norm);
+    resample(A, B, ns[0], ms[0], ns[1], ms[1], nChannels, norm);
   } else {
     cv::Mat A = input.toCvMat(), B;
     cv::resize(A, B, dsize, 0, 0, cv::INTER_NEAREST);
