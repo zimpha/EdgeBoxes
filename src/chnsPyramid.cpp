@@ -82,8 +82,6 @@ void chnsPyramid(uint8_t *image, int h, int w, int d, PyramidInput &pyramidInput
   CellArray I, I1, tmp;
   I.rows = h, I.cols = w, I.channels = d;
   I.data = rgbConvert(image, h, w, d, chnsInput.pColor.colorSpace);
-  chnsInput.pColor.colorSpace = CS_ORIG;
-
   // get scales at which to compute features and list of real/approx scales
   float *scales, *scaleshw;
   int nScales = getScales(nPerOct, nOctUp, minDs, shrink, h, w, scales, scaleshw);

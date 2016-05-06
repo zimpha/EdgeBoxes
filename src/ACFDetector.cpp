@@ -1,5 +1,6 @@
 #include "ACFDetector.h"
 #include "imResample.h"
+#include <stdio.h>
 
 #include <opencv2/opencv.hpp>
 

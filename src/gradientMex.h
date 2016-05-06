@@ -82,7 +82,7 @@ void gradMag( float *I, float *M, float *O, int h, int w, int d, bool full ) {
     }
     // compute gradient mangitude (M) and normalize Gx
     for( y=0; y<h4/4; y++ ) {
-      _m = MIN( RCPSQRT(_M2[y]), SET(1e10f) );
+      _m = MINF( RCPSQRT(_M2[y]), SET(1e10f) );
       _M2[y] = RCP(_m);
       if(O) _Gx[y] = MUL( MUL(_Gx[y],_m), SET(acMult) );
       if(O) _Gx[y] = XOR( _Gx[y], AND(_Gy[y], SET(-0.f)) );
