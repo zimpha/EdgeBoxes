@@ -6,6 +6,8 @@
 #include "imResample.h"
 #include "rgbConvert.h"
 #include "wrappers.h"
+#include <stdlib.h>
+#include <stdio.h>
 #include <string>
 
 #ifdef USEOMP
@@ -142,9 +144,8 @@ void EdgeDetector::detect(CellArray &I, CellArray &E, CellArray &O, CellArray &c
 
   E.create(outDims[0], outDims[1], outDims[2]);
   uint32_t *ind = new uint32_t[indDims[0] * indDims[1] * indDims[2]];
-  float* chns = (float*)chnsReg.data;
-  float* chnsSs = (float*)chnsSim.data;
-  clock_t st = clock();
+  float* chns = chnsReg.data;
+  float* chnsSs = chnsSim.data;
   #ifdef USEOMP
   nThreads = std::min(nThreads, omp_get_max_threads());
   #pragma omp parallel for num_threads(nThreads)
@@ -170,117 +171,39 @@ void EdgeDetector::detect(CellArray &I, CellArray &E, CellArray &O, CellArray &c
       ind[r + c * h1 + t * h1 * w1] = k;
     }
   }
-  clock_t ed = clock();
-  std::cerr << "time for ind: " << (double)(ed - st) / CLOCKS_PER_SEC << std::endl;
-  if (!sharpen) { // compute edge maps (avoiding collisions from parallel executions)
-    st = clock();
-    for (int c0 = 0; c0 < gtWidth / stride; ++c0) {
-      #ifdef USEOMP
-      #pragma omp parallel for num_threads(nThreads)
-      #endif
-      for (int c = c0; c < w1; c += gtWidth / stride) {
-        for (int r = 0; r < h1; ++r) for (int t = 0; t < nTreesEval; ++t) {
-          uint32_t k = ind[r + c * h1 + t * h1 * w1];
-          float *E1 = (float*)E.data + (r * stride) + (c * stride) * h2;
-          int b0 = eBnds[k * nBnds], b1 = eBnds[k * nBnds + 1];
-          if (b0 == b1) continue;
-          for (int b = b0; b < b1; ++b) E1[eids[eBins[b]]]++;
-        }
-      }
-    }
-    ed = clock();
-    std::cerr << "time for edge maps: " << (double)(ed - st) / CLOCKS_PER_SEC << std::endl;
-  } else { // computed sharpened edge maps, snapping to local color values
-    const int g = gtWidth;
-    uint16_t N[4096 * 4];
-    for (int c = 0; c < g; ++c) for (int r = 0; r < g; ++r) {
-      int i = c * g + r;
-      uint16_t* N1 = N + i * 4;
-      N1[0] = c > 0 ? i - g : i; N1[1] = c < g - 1 ? i + g : i;
-      N1[2] = r > 0 ? i - 1 : i; N1[3] = r < g - 1 ? i + 1 : i;
-    }
+  // compute edge maps (avoiding collisions from parallel executions)
+  for (int c0 = 0; c0 < gtWidth / stride; ++c0) {
     #ifdef USEOMP
     #pragma omp parallel for num_threads(nThreads)
     #endif
-    for (int c = 0; c < w1; ++c) for (int r = 0; r < h1; ++r) {
-      for (int t = 0; t < nTreesEval; ++t) {
-        // get current segment and copy into S
+    for (int c = c0; c < w1; c += gtWidth / stride) {
+      for (int r = 0; r < h1; ++r) for (int t = 0; t < nTreesEval; ++t) {
         uint32_t k = ind[r + c * h1 + t * h1 * w1];
-        int m = nSegs[k];
-        if (m == 1) continue;
-        uint8_t S[4096];
-        memcpy(S, segs + k * g * g, sizeof(uint8_t) * g * g);
-        // compute color model for each segment using every other pixel
-        int ci, ri, s, z;
-        float ns[100], mus[1000];
-        const float *I1 = (float*)I.data + (c * stride + (imWidth - g) / 2) * h + r * stride + (imWidth - g) / 2;
-        for (s = 0; s < m; ++s) {
-          memset(mus + s * Z, ns[s] = 0, sizeof(float) * Z);
-        }
-        for (ci = 0; ci < g; ci += 2) for (ri = 0; ri < g; ri += 2) {
-          s = S[ci * g + ri]; ++ns[s];
-          for (z = 0; z < Z; ++z) mus[s * Z + z] += I1[z * h * w + ci * h + ri];
-        }
-        for (s = 0; s < m; ++s) for (z = 0; z < Z; ++z) mus[s * Z + z] /= ns[s];
-        // update segment S according to local color values
-        int b0 = eBnds[k * nBnds], b1 = eBnds[k * nBnds + sharpen];
-        for (int b = b0; b < b1; ++b) {
-          float vs[10], d, e, eBest = 1e10f;
-          int i, sBest = -1, ss[4];
-          for (i = 0; i < 4; ++i) ss[i] = S[N[eBins[b] * 4 + i]];
-          for (z = 0; z < Z; ++z) vs[z] = I1[iids[eBins[b]] + z * h * w];
-          for (i = 0; i < 4; ++i) {
-            s = ss[i]; e = 0;
-            if (s == sBest) continue;
-            for (z = 0; z < Z; ++z) {
-              d = mus[s * Z + z] - vs[z];
-              e += d * d;
-            }
-            if (e < eBest) {
-              eBest = e;
-              sBest = s;
-            }
-          }
-          S[eBins[b]] = sBest;
-        }
-        // convert mask to edge maps (examining expanded set of pixels)
-        float *E1 = (float*)E.data + c * stride * h2 + r * stride;
-        b1 = eBnds[k * nBnds + sharpen + 1];
-        for (int b = b0; b < b1; ++b) {
-          int i = eBins[b];
-          uint8_t s = S[i];
-          uint16_t *N1 = N + i * 4;
-          if (s != S[N1[0]] || s != S[N1[1]] || s != S[N1[2]] || s != S[N1[3]]) {
-            E1[eids[i]]++;
-          }
-        }
+        float *E1 = (float*)E.data + (r * stride) + (c * stride) * h2;
+        int b0 = eBnds[k * nBnds], b1 = eBnds[k * nBnds + 1];
+        if (b0 == b1) continue;
+        for (int b = b0; b < b1; ++b) E1[eids[eBins[b]]]++;
       }
     }
   }
-
   // free memory
   delete [] iids; delete [] eids;
   delete [] cids; delete [] cids1; delete [] cids2;
   delete [] ind;
 
-  st = clock();
   // normalize and finalize edge maps
   float t = 1.0f * stride * stride / (gtWidth * gtWidth) / nTreesEval;
   int r = gtWidth / 2;
 
-  if (sharpen == 0) t *= 2;
-  else if (sharpen == 1) t *= 1.8;
-  else t *= 1.66;
-
   E.crop(r, oRows + r, r, oCols + r);
-  E.multiply(t);
+  E.multiply(t * 2);
   CellArray E_tmp;
   convTri(E, E_tmp, 1);
   E.swap(E_tmp);
 
+  CellArray Ox, Oy, Oxx, Oxy, Oyy;
   // compute approximate orientation O from edges E
   convTri(E, E_tmp, 4);
-  CellArray Ox, Oy, Oxx, Oxy, Oyy;
   gradient(E_tmp, Ox, Oy);
   gradient(Ox, Oxx, Oxy);
   gradient(Oy, Oxy, Oyy);
@@ -292,8 +215,6 @@ void EdgeDetector::detect(CellArray &I, CellArray &E, CellArray &O, CellArray &c
       O.at(i, j) = val;
     }
   }
-  ed = clock();
-  std::cerr << "time for post process: " << (double)(ed - st) / CLOCKS_PER_SEC << std::endl;
 }
 
 void EdgeDetector::edgesDetect(uint8_t* image, int h, int w, int d, CellArray &E, CellArray &O) {
@@ -301,7 +222,7 @@ void EdgeDetector::edgesDetect(uint8_t* image, int h, int w, int d, CellArray &E
   int oRows = h, oCols = w;
   // pad image, making divisible by 4
   int r = imWidth / 2;
-  std::vector<int> p = {r, r, r, r};
+  std::vector<int> p; p.assign(4, r);
   p[1] += (4 - (h + r * 2) % 4) % 4;
   p[3] += (4 - (w + r * 2) % 4) % 4;
   image = imPad(image, h, w, d, p, "symmetric");
@@ -312,15 +233,10 @@ void EdgeDetector::edgesDetect(uint8_t* image, int h, int w, int d, CellArray &E
   CellArray chnsReg, chnsSim;
   featureExtract(image, h, w, d, chnsReg, chnsSim);
   CellArray I; I.rows = h, I.cols = w, I.channels = d;
-  //I.data = rgbConvert(image, h, w, d, (int)CS_RGB);
-  if (sharpen) {
-    CellArray tmp;
-    convTri(I, tmp, 1.0f);
-    I.swap(tmp);
-  }
   detect(I, E, O, chnsReg, chnsSim, oRows, oCols);
   // perform nms
   edgeNms(E, O, 2, 0, 1, nThreads);
+  wrFree(image);
 }
 
 uint32_t* EdgeDetector::buildLookup(int *dims, int w) {

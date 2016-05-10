@@ -15,6 +15,7 @@ template <class T>
 class Array {
 public:
   Array(): h(0), w(0), data(NULL), isFree(true) {}
+  ~Array() {clear();}
   Array(int _h, int _w): h(_h), w(_w), data(new T[h * w]()), isFree(false) {}
   void init(int _h, int _w) {
     if (!isFree && h * w == _h * _w) {
@@ -50,7 +51,7 @@ public:
 
 typedef std::vector<float> vectorf;
 typedef std::vector<int> vectori;
-typedef std::vector<std::pair<int, float>> vectorif;
+typedef std::vector<std::pair<int, float> > vectorif;
 typedef Array<float> arrayf;
 typedef Array<int> arrayi;
 typedef Array<bool> arrayb;

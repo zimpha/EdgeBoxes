@@ -1,5 +1,6 @@
 #include "EdgeBoxes.h"
-#include <cmath>
+#include <math.h>
+#include <stdio.h>
 #include <algorithm>
 #include <vector>
 #include <queue>
@@ -48,10 +49,7 @@ Boxes EdgeBoxes::generate(CellArray &E, CellArray &O) {
 }
 
 void EdgeBoxes::generate(Boxes &boxes, CellArray &E, CellArray &O, arrayf &V) {
-  clock_t st = clock();
   clusterEdges(E, O, V);
-  clock_t ed = clock();
-  printf("%d time for cluster: %.6f\n", _segCnt, (double)(ed - st) / CLOCKS_PER_SEC);
   prepDataStructs(E);
   scoreAllBoxes(boxes);
 }
